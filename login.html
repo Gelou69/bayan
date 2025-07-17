@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #5e9fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem 3rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 320px;
+            max-width: 90%;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.3rem;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            margin-bottom: 1rem;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            border-color: #0070f3;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.8rem;
+            background-color: #0070f3;
+            color: white;
+            font-weight: 700;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #005bb5;
+        }
+
+        .message {
+            margin-top: 1rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .message.error {
+            color: #e63946;
+        }
+
+        .message.success {
+            color: #2a9d8f;
+        }
+
+        .signup-link {
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .signup-link a {
+            color: #0070f3;
+            text-decoration: none;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="container">
+    <h2>Login</h2>
+    <form id="loginForm">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required />
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required />
+
+        <button type="submit">Login</button>
+    </form>
+    <div id="message" class="message"></div>
+    <div class="signup-link">
+        Don't have an account? <a href="signup.html">Sign up</a>
+    </div>
+</div>
+
+<script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabaseUrl = 'https://sacjuubsiixwnazxjtpp.supabase.co'; // Replace with your Supabase URL
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhY2p1dWJzaWl4d25henhqdHBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2MjQ2MDEsImV4cCI6MjA2ODIwMDYwMX0.U9TJeh25-3eEwr2y5rSmj4Kh37HXJZdWgXeqEqPTzmo'; // Replace with your Supabase Public Key
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const loginForm = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const messageDiv = document.getElementById('message');
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = emailInput.value;
+        const password = passwordInput.value;
+
+        messageDiv.textContent = ''; // Clear previous messages
+        messageDiv.classList.remove('error', 'success');
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
+
+        if (error) {
+            messageDiv.textContent = error.message;
+            messageDiv.classList.add('error');
+            console.error('Login error:', error.message);
+        } else {
+            messageDiv.textContent = 'Login successful! Redirecting...';
+            messageDiv.classList.add('success');
+            console.log('User logged in:', data.user);
+            // Redirect to groups.html after successful login
+            window.location.href = 'profile.html';
+        }
+    });
+</script>
+
+</body>
+</html>
