@@ -1,164 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Supabase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #5e9fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: linear-gradient(135deg, #a5b4fc 0%, #f3f4f6 100%);
             min-height: 100vh;
-            margin: 0;
+            animation: bgMove 8s ease-in-out infinite alternate;
         }
-
-        .container {
-            background: white;
-            padding: 2rem 3rem;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            width: 320px;
-            max-width: 90%;
+        @keyframes bgMove {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
         }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 1.5rem;
-            color: #333;
+        .login-container {
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            border: 1px solid #e5e7eb;
+            position: relative;
+            overflow: hidden;
         }
-
-        label {
-            display: block;
-            margin-bottom: 0.3rem;
-            color: #555;
-            font-weight: 600;
+        .login-container::before {
+            content: "";
+            position: absolute;
+            top: -40%;
+            left: -40%;
+            width: 180%;
+            height: 180%;
+            background: radial-gradient(circle, #6366f1 0%, transparent 70%);
+            opacity: 0.15;
+            animation: pulseGlow 3s infinite alternate;
+            z-index: 0;
         }
-
-        input[type="email"],
-        input[type="password"] {
-            width: 100%;
-            padding: 0.7rem 0.9rem;
-            margin-bottom: 1rem;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 1rem;
-            box-sizing: border-box;
-            transition: border-color 0.3s ease;
+        @keyframes pulseGlow {
+            0% { opacity: 0.15; }
+            100% { opacity: 0.25; }
         }
-
+        .login-container h1 {
+            letter-spacing: 1px;
+            animation: fadeInDown 1s;
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
         input:focus {
-            border-color: #0070f3;
-            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px #a5b4fc;
+            transition: box-shadow 0.3s, border-color 0.3s;
         }
-
         button {
-            width: 100%;
-            padding: 0.8rem;
-            background-color: #0070f3;
-            color: white;
-            font-weight: 700;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            transition: background-color 0.3s ease;
+            transition: background 0.3s, transform 0.2s;
         }
-
+        button:active {
+            transform: scale(0.97);
+        }
         button:hover {
-            background-color: #005bb5;
+            background: linear-gradient(90deg, #6366f1 0%, #2563eb 100%);
+            box-shadow: 0 4px 16px 0 rgba(99,102,241,0.15);
         }
-
-        .message {
-            margin-top: 1rem;
-            font-weight: 600;
-            text-align: center;
+        .login-container form {
+            position: relative;
+            z-index: 1;
+            animation: fadeInUp 1.2s;
         }
-
-        .message.error {
-            color: #e63946;
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px);}
+            to { opacity: 1; transform: translateY(0);}
         }
-
-        .message.success {
-            color: #2a9d8f;
+        .login-container label {
+            transition: color 0.3s;
         }
-
-        .signup-link {
-            margin-top: 1rem;
-            text-align: center;
-            font-weight: 600;
+        .login-container input:focus + label,
+        .login-container input:focus ~ label {
+            color: #6366f1;
         }
-
-        .signup-link a {
-            color: #0070f3;
-            text-decoration: none;
+        #loginError {
+            animation: shake 0.4s;
         }
-
-        .signup-link a:hover {
-            text-decoration: underline;
+        @keyframes shake {
+            0% { transform: translateX(0);}
+            25% { transform: translateX(-5px);}
+            50% { transform: translateX(5px);}
+            75% { transform: translateX(-5px);}
+            100% { transform: translateX(0);}
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
-
-<div class="container">
-    <h2>Login</h2>
-    <form id="loginForm">
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" required />
-
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required />
-
-        <button type="submit">Login</button>
-    </form>
-    <div id="message" class="message"></div>
-    <div class="signup-link">
-        Don't have an account? <a href="signup.html">Sign up</a>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="login-container bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h1 class="text-3xl font-extrabold mb-6 text-indigo-700 text-center drop-shadow">Login</h1>
+        <form id="loginForm" class="space-y-6">
+            <div>
+                <label for="email" class="block text-gray-700 text-sm font-bold mb-2 transition-colors">Email:</label>
+                <input type="email" id="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline transition-all duration-300" required>
+            </div>
+            <div>
+                <label for="password" class="block text-gray-700 text-sm font-bold mb-2 transition-colors">Password:</label>
+                <input type="password" id="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline transition-all duration-300" required>
+            </div>
+            <div id="loginError" class="text-red-500 text-sm hidden"></div>
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded w-full transition-all duration-300 shadow-md">Login</button>
+    
+        </form>
     </div>
-</div>
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-<script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+        const supabaseUrl = 'https://sacjuubsiixwnazxjtpp.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhY2p1dWJzaWl4d25henhqdHBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2MjQ2MDEsImV4cCI6MjA2ODIwMDYwMX0.U9TJeh25-3eEwr2y5rSmj4Kh37HXJZdWgXeqEqPTzmo';
+        const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const supabaseUrl = 'https://sacjuubsiixwnazxjtpp.supabase.co'; // Replace with your Supabase URL
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhY2p1dWJzaWl4d25henhqdHBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2MjQ2MDEsImV4cCI6MjA2ODIwMDYwMX0.U9TJeh25-3eEwr2y5rSmj4Kh37HXJZdWgXeqEqPTzmo'; // Replace with your Supabase Public Key
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const loginForm = document.getElementById('loginForm');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const messageDiv = document.getElementById('message');
-
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = emailInput.value;
-        const password = passwordInput.value;
-
-        messageDiv.textContent = ''; // Clear previous messages
-        messageDiv.classList.remove('error', 'success');
-
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password,
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                const errDiv = document.getElementById('loginError');
+                errDiv.textContent = error.message;
+                errDiv.classList.remove('hidden');
+                errDiv.style.animation = 'shake 0.4s';
+                setTimeout(() => { errDiv.style.animation = ''; }, 400);
+            } else {
+                document.getElementById('loginError').classList.add('hidden');
+                window.location.href = 'profile.html';
+            }
         });
-
-        if (error) {
-            messageDiv.textContent = error.message;
-            messageDiv.classList.add('error');
-            console.error('Login error:', error.message);
-        } else {
-            messageDiv.textContent = 'Login successful! Redirecting...';
-            messageDiv.classList.add('success');
-            console.log('User logged in:', data.user);
-            // Redirect to groups.html after successful login
-            window.location.href = 'profile.html';
-        }
-    });
-</script>
-
+    </script>
 </body>
 </html>

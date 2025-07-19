@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Persons Table Display</title>
+    <title>Group Members & Tickets</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom font for better aesthetics */
@@ -18,6 +18,43 @@
             padding: 20px;
             box-sizing: border-box;
         }
+        .navbar {
+    background-color: #4f46e5;
+    color: white;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    max-width: 1200px;
+    width: 100%;
+}
+.navbar a {
+    color: white;
+    text-decoration: none;
+    margin-right: 20px;
+    
+    font-weight: 500;
+    transition: color 0.2s;
+}
+.navbar a:hover {
+    color: #c7d2fe;
+}
+#logout-button {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+#logout-button:hover {
+    background-color: #dc2626;
+}
+
         /* Ensure table is responsive and centered */
         .table-container {
             width: 100%;
@@ -151,7 +188,8 @@
         }
 
         .form-group input,
-        .form-group select {
+        .form-group select,
+        .form-group textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #d1d5db;
@@ -226,17 +264,77 @@
         .payment-button:hover {
             background-color: #d97706;
         }
+        /* Dropdown styles for 3-dot menu */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #fff;
+            min-width: 140px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            z-index: 1;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .dropdown-content button {
+            width: 100%;
+            border: none;
+            background: none;
+            padding: 10px 16px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: #374151;
+            transition: background 0.2s;
+        }
+        .dropdown-content button:hover {
+            background-color: #f3f4f6;
+        }
+        .dropdown.show .dropdown-content {
+            display: block;
+        }
+        .dots-button {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 0 8px;
+        }
+        .add-member-header-btn {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-left: 12px;
+            transition: background 0.2s;
+        }
+        .add-member-header-btn:hover {
+            background-color: #059669;
+        }
+        
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+    <nav class="header">
+    <div class="navbar">
+        <a href="profile.html">Home</a>
+        <a href="groups.html">Groups</a>
+        <a href="person.html">Persons</a>
+        <button id="logout-button">Logout</button>
+    </div>
+    </nav>
     <div id="main-content" class="table-container content-hidden">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Persons Data</h2>
-
-        <button id="add-person-button" class="add-button action-button">Add New Ticket</button>
-
-        <div id="loading" class="loading-message">Loading data...</div>
-        <div id="error" class="error-message hidden"></div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Group Members Data</h2>
         <table>
             <thead>
                 <tr>
@@ -245,39 +343,114 @@
                     <th>Ticket Price</th>
                     <th>Quantity</th>
                     <th>Reference Code</th>
+                    <th>Last Payment</th>
+                    <th>Balance</th> <!-- NEW COLUMN -->
                     <th>Created At</th>
-                    <th>Actions</th> </tr>
+                    <th>
+                        Actions
+                        <button id="add-member-header-btn" class="add-member-header-btn">Add Member</button>
+                    </th>
+                </tr>
             </thead>
-            <tbody id="persons-table-body">
+            <tbody id="group-members-table-body">
             </tbody>
         </table>
+        <div id="loading" class="loading-message">Loading data...</div>
+        <div id="error" class="error-message hidden"></div>
     </div>
 
-    <div id="person-modal" class="modal hidden">
+    <div id="group-member-modal" class="modal hidden">
         <div class="modal-content">
-            <span class="close-button" id="close-modal-button">&times;</span>
-            <h3 class="text-xl font-bold text-gray-800 mb-4" id="modal-title">Add New Ticket</h3>
-            <form id="person-form">
-                <input type="hidden" id="person-id">
+            <span class="close-button" id="close-group-member-modal-button">&times;</span>
+            <h3 class="text-xl font-bold text-gray-800 mb-4" id="group-member-modal-title">Add New Ticket</h3>
+            <form id="group-member-form">
+                <input type="hidden" id="member-id">
                 <div class="form-group">
-                    <label for="person-name">Name:</label>
-                    <input type="text" id="person-name" required>
+                    <label for="member-name">Name:</label>
+                    <input type="text" id="member-name" required>
                 </div>
                 <div class="form-group">
-                    <label for="person-ticket-price">Ticket Price:</label>
-                    <input type="number" id="person-ticket-price" step="0.01" required>
+                    <label for="member-ticket-price">Ticket Price:</label>
+                    <input type="number" id="member-ticket-price" step="0.01" required>
                 </div>
                 <div class="form-group">
-                    <label for="person-quantity">Quantity:</label>
-                    <input type="number" id="person-quantity" min="1" required>
+                    <label for="member-quantity">Quantity:</label>
+                    <input type="number" id="member-quantity" min="1" required>
                 </div>
                 <div class="form-actions">
-                    <button type="button" id="cancel-form-button" class="action-button cancel-button">Cancel</button>
+                    <button type="button" id="cancel-group-member-form-button" class="action-button cancel-button">Cancel</button>
                     <button type="submit" class="action-button save-button">Save</button>
                 </div>
             </form>
         </div>
     </div>
+
+    <div id="payment-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button" id="close-payment-modal-button">&times;</span>
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Record New Transaction</h3>
+            <form id="payment-form">
+                <input type="hidden" id="payment-member-id">
+                <p class="mb-4">Transactions for: <strong id="payment-member-name"></strong></p>
+                <div class="form-group">
+                    <label for="payment-amount">Amount:</label>
+                    <input type="number" id="payment-amount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="payment-transaction-type">Transaction Type:</label>
+                    <select id="payment-transaction-type" required>
+                        <option value="Payment">Payment</option>
+                        <option value="Refund">Refund</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="payment-reference-code">Confirm Reference Code:</label>
+                    <input type="text" id="payment-reference-code" placeholder="Enter member's reference code to confirm" required>
+                </div>
+                <div class="form-group">
+                    <label for="payment-notes">Notes (Optional):</label>
+                    <textarea id="payment-notes" rows="3" class="w-full p-2 border border-gray-300 rounded-md"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="cancel-payment-form-button" class="action-button cancel-button">Cancel</button>
+                    <button type="submit" class="action-button save-button">Record Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="add-ticket-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button" id="close-add-ticket-modal-button">&times;</span>
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Add Tickets for: <strong id="add-ticket-member-name"></strong></h3>
+            <form id="add-ticket-form">
+                <input type="hidden" id="add-ticket-member-id">
+                <p class="mb-4">Current Ticket: <strong id="current-ticket-display"></strong></p>
+                <div class="form-group">
+                    <label for="add-ticket-quantity">Quantity to Add:</label>
+                    <input type="number" id="add-ticket-quantity" min="1" value="1" required>
+                    <small class="text-gray-500">Leave "New Ticket Type" and "New Ticket Price" blank to just add more of the current ticket type.</small>
+                </div>
+                <div class="form-group">
+                    <label for="new-ticket-type">New Ticket Type (Optional, to change primary type):</label>
+                    <input type="text" id="new-ticket-type" placeholder="-- No Change --">
+                </div>
+                <div class="form-group">
+                    <label for="new-ticket-price">New Ticket Price (Optional, if new type or price change):</label>
+                    <input type="number" id="new-ticket-price" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="add-ticket-reference-code">Confirm Reference Code:</label>
+                    <input type="text" id="add-ticket-reference-code" placeholder="Enter member's reference code to confirm" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="cancel-add-ticket-form-button" class="action-button cancel-button">Cancel</button>
+                    <button type="submit" class="action-button save-button">Update Tickets</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -288,22 +461,46 @@
         const supabase = createClient(supabaseUrl, supabaseKey);
 
         // --- DOM Elements ---
-        const personsTableBody = document.getElementById('persons-table-body');
+        const groupMembersTableBody = document.getElementById('group-members-table-body');
         const loadingMessage = document.getElementById('loading');
         const errorMessage = document.getElementById('error');
         const mainContent = document.getElementById('main-content');
-        const addPersonButton = document.getElementById('add-person-button');
-        const personModal = document.getElementById('person-modal');
-        const closeModalButton = document.getElementById('close-modal-button');
-        const cancelFormButton = document.getElementById('cancel-form-button');
-        const personForm = document.getElementById('person-form');
-        const modalTitle = document.getElementById('modal-title');
 
-        // Form fields
-        const personIdField = document.getElementById('person-id');
-        const personNameField = document.getElementById('person-name');
-        const personTicketPriceField = document.getElementById('person-ticket-price');
-        const personQuantityField = document.getElementById('person-quantity');
+        // Group Member (Ticket) Modal Elements
+        const groupMemberModal = document.getElementById('group-member-modal');
+        const closeGroupMemberModalButton = document.getElementById('close-group-member-modal-button');
+        const cancelGroupMemberFormButton = document.getElementById('cancel-group-member-form-button');
+        const groupMemberForm = document.getElementById('group-member-form');
+        const groupMemberModalTitle = document.getElementById('group-member-modal-title');
+        const memberIdField = document.getElementById('member-id');
+        const memberNameField = document.getElementById('member-name');
+        const memberTicketPriceField = document.getElementById('member-ticket-price');
+        const memberQuantityField = document.getElementById('member-quantity');
+
+        // Payment Modal Elements
+        const paymentModal = document.getElementById('payment-modal');
+        const closePaymentModalButton = document.getElementById('close-payment-modal-button');
+        const cancelPaymentFormButton = document.getElementById('cancel-payment-form-button');
+        const paymentForm = document.getElementById('payment-form');
+        const paymentMemberIdField = document.getElementById('payment-member-id');
+        const paymentMemberNameDisplay = document.getElementById('payment-member-name');
+        const paymentAmountField = document.getElementById('payment-amount');
+        const paymentTransactionTypeField = document.getElementById('payment-transaction-type');
+        const paymentReferenceCodeField = document.getElementById('payment-reference-code');
+        const paymentNotesField = document.getElementById('payment-notes');
+
+        // Add Ticket Modal Elements
+        const addTicketModal = document.getElementById('add-ticket-modal');
+        const closeAddTicketModalButton = document.getElementById('close-add-ticket-modal-button');
+        const cancelAddTicketFormButton = document.getElementById('cancel-add-ticket-form-button');
+        const addTicketForm = document.getElementById('add-ticket-form');
+        const addTicketMemberIdField = document.getElementById('add-ticket-member-id');
+        const addTicketMemberNameDisplay = document.getElementById('add-ticket-member-name');
+        const currentTicketDisplay = document.getElementById('current-ticket-display');
+        const addTicketQuantityField = document.getElementById('add-ticket-quantity');
+        const newTicketTypeField = document.getElementById('new-ticket-type');
+        const newTicketPriceField = document.getElementById('new-ticket-price');
+        const addTicketReferenceCodeField = document.getElementById('add-ticket-reference-code');
 
         // --- Inactivity Timer Configuration ---
         const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -346,16 +543,16 @@
                 mainContent.classList.remove('content-hidden');
                 loadingMessage.classList.add('hidden');
                 errorMessage.classList.add('hidden');
-                fetchPersons(); // Fetch data after successful authentication
+                fetchGroupMembers(); // Fetch data after successful authentication
                 resetInactivityTimer(); // Start/reset inactivity timer once authenticated
             }
         }
 
-        // --- CRUD Operations ---
-        async function fetchPersons() {
+        // --- CRUD Operations for Group Members ---
+        async function fetchGroupMembers() {
             loadingMessage.classList.remove('hidden');
             errorMessage.classList.add('hidden');
-            personsTableBody.innerHTML = ''; // Clear existing data
+            groupMembersTableBody.innerHTML = '';
 
             try {
                 const { data, error } = await supabase
@@ -363,234 +560,545 @@
                     .select('*')
                     .order('created_at', { ascending: false });
 
-                if (error) {
-                    throw error;
-                }
+                if (error) throw error;
 
                 if (data.length === 0) {
-                    personsTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-500">No data found.</td></tr>`; // Updated colspan
+                    groupMembersTableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-gray-500">No data found.</td></tr>`;
                 } else {
-                    data.forEach(person => {
+                    for (const member of data) {
+                        // Fetch all transactions for this person
+                        const { data: transactions, error: txError } = await supabase
+                            .from('transactions_person')
+                            .select('amount, transaction_type')
+                            .eq('person_id', member.id);
+
+                        let totalPayments = 0;
+                        let totalRefunds = 0;
+
+                        if (!txError && transactions) {
+                            for (const tx of transactions) {
+                                if (tx.transaction_type === 'Payment') {
+                                    totalPayments += tx.amount;
+                                } else if (tx.transaction_type === 'Refund') {
+                                    totalRefunds += tx.amount;
+                                }
+                            }
+                        }
+
+                        // Calculate balance
+                        const ticketValue = parseFloat(member.ticket_price) * parseInt(member.quantity);
+                        const balance = ticketValue - totalPayments + totalRefunds;
+
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td class="uuid-cell">${person.id}</td>
-                            <td>${person.name}</td>
-                            <td class="numeric-cell">${parseFloat(person.ticket_price).toFixed(2)}</td>
-                            <td class="numeric-cell">${person.quantity}</td>
-                            <td class="code-cell">${person.reference_code}</td>
-                            <td class="timestamp-cell">${new Date(person.created_at).toLocaleString()}</td>
-                            <td class="flex gap-2">
-                                <button class="action-button edit-button" data-id="${person.id}">Edit</button>
-                                <button class="action-button delete-button" data-id="${person.id}">Delete</button>
-                                <button class="action-button payment-button" data-id="${person.id}" data-name="${person.name}" data-price="${person.ticket_price}" data-quantity="${person.quantity}">Add Payment</button>
+                            <td class="uuid-cell">${member.id}</td>
+                            <td>${member.name}</td>
+                            <td class="numeric-cell">${parseFloat(member.ticket_price).toFixed(2)}</td>
+                            <td class="numeric-cell">${member.quantity}</td>
+                            <td class="code-cell">${member.reference_code}</td>
+                            <td>$${member.last_payment_amount ? parseFloat(member.last_payment_amount).toFixed(2) : '0.00'} (${member.last_payment_date ? new Date(member.last_payment_date).toLocaleDateString() : 'N/A'})</td>
+                            <td class="numeric-cell">${balance.toFixed(2)}</td>
+                            <td class="timestamp-cell">${new Date(member.created_at).toLocaleString()}</td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="dots-button" title="Actions">&#x22EE;</button>
+                                    <div class="dropdown-content">
+                                        <button class="edit-action" data-id="${member.id}">Edit</button>
+                                        <button class="delete-action" data-id="${member.id}" data-name="${member.name}" data-price="${member.ticket_price}" data-quantity="${member.quantity}">Delete</button>
+                                        <button class="payment-action" data-id="${member.id}" data-name="${member.name}" data-price="${member.ticket_price}" data-quantity="${member.quantity}" data-reference-code="${member.reference_code}">Add Payment</button>
+                                        <button class="add-ticket-action" data-id="${member.id}" data-name="${member.name}" data-price="${member.ticket_price}" data-quantity="${member.quantity}" data-reference-code="${member.reference_code}">Add Ticket</button>
+                                    </div>
+                                </div>
                             </td>
                         `;
-                        personsTableBody.appendChild(row);
+                        groupMembersTableBody.appendChild(row);
+                    }
+
+                    // Dropdown logic
+                    groupMembersTableBody.querySelectorAll('.dots-button').forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            // Close other dropdowns
+                            groupMembersTableBody.querySelectorAll('.dropdown').forEach(d => d.classList.remove('show'));
+                            btn.parentElement.classList.toggle('show');
+                        });
+                    });
+                    // Close dropdowns when clicking outside
+                    document.addEventListener('click', () => {
+                        groupMembersTableBody.querySelectorAll('.dropdown').forEach(d => d.classList.remove('show'));
                     });
 
-                    // Attach event listeners to newly created buttons
-                    document.querySelectorAll('.edit-button').forEach(button => {
-                        button.addEventListener('click', (event) => openEditModal(event.target.dataset.id));
+                    // Attach event listeners to dropdown actions
+                    groupMembersTableBody.querySelectorAll('.edit-action').forEach(button => {
+                        button.addEventListener('click', (event) => openGroupMemberModalForEdit(event.target.dataset.id));
                     });
-                    document.querySelectorAll('.delete-button').forEach(button => {
-                        button.addEventListener('click', (event) => handleDeletePerson(event.target.dataset.id));
+                    groupMembersTableBody.querySelectorAll('.delete-action').forEach(button => {
+                        button.addEventListener('click', (event) => handleDeleteGroupMember(
+                            event.target.dataset.id,
+                            event.target.dataset.name,
+                            parseFloat(event.target.dataset.price),
+                            parseInt(event.target.dataset.quantity)
+                        ));
                     });
-                     document.querySelectorAll('.payment-button').forEach(button => {
-                        button.addEventListener('click', (event) => handleAddPayment(
+                    groupMembersTableBody.querySelectorAll('.payment-action').forEach(button => {
+                        button.addEventListener('click', (event) => openPaymentModal(
                             event.target.dataset.id,
                             event.target.dataset.name,
                             event.target.dataset.price,
-                            event.target.dataset.quantity
+                            event.target.dataset.quantity,
+                            event.target.dataset.referenceCode
+                        ));
+                    });
+                    groupMembersTableBody.querySelectorAll('.add-ticket-action').forEach(button => {
+                        button.addEventListener('click', (event) => openAddTicketModal(
+                            event.target.dataset.id,
+                            event.target.dataset.name,
+                            parseFloat(event.target.dataset.price),
+                            parseInt(event.target.dataset.quantity),
+                            event.target.dataset.referenceCode
                         ));
                     });
                 }
             } catch (error) {
-                console.error('Error fetching persons:', error.message);
-                errorMessage.textContent = `Failed to load data: ${error.message}. Please check your Supabase configuration and network connection.`;
+                console.error('Error fetching group members:', error.message);
+                errorMessage.textContent = `Failed to load data: ${error.message}. Please check your Supabase configuration and network connection, and ensure 'persons' table exists.`;
                 errorMessage.classList.remove('hidden');
-                personsTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
+                groupMembersTableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
             } finally {
                 loadingMessage.classList.add('hidden');
             }
         }
 
-        async function addPerson(personData) {
+        async function addGroupMember(memberData) {
             try {
-                // Generate a simple reference code (e.g., first 3 letters of name + random 4 digits)
-                const referenceCode = `${personData.name.substring(0, 3).toUpperCase()}${Math.floor(1000 + Math.random() * 9000)}`;
+                const referenceCode = `${memberData.name.substring(0, 3).toUpperCase()}${Math.floor(1000 + Math.random() * 9000)}`;
                 const { data, error } = await supabase
                     .from('persons')
-                    .insert([{ ...personData, reference_code: referenceCode }])
-                    .select(); // Select the inserted data to get the generated ID and created_at
+                    .insert([{ ...memberData, reference_code: referenceCode, last_payment_amount: 0.00 }]) // Initialize last payment
+                    .select();
 
                 if (error) {
                     throw error;
                 }
-                console.log('Person added:', data);
-                closeModal();
-                fetchPersons(); // Refresh table
-                alert('Ticket added successfully!');
+                console.log('Group member added:', data);
+                closeGroupMemberModal();
+                fetchGroupMembers(); // Refresh table
+                alert('Member and ticket added successfully!');
             } catch (error) {
-                console.error('Error adding person:', error.message);
-                alert(`Error adding ticket: ${error.message}`);
+                console.error('Error adding group member:', error.message);
+                alert(`Error adding member: ${error.message}`);
             }
         }
 
-        async function updatePerson(id, personData) {
+        async function updateGroupMember(id, memberData, oldMemberData) { // Added oldMemberData for comparison
             try {
                 const { data, error } = await supabase
                     .from('persons')
-                    .update(personData)
+                    .update(memberData)
                     .eq('id', id)
-                    .select(); // Select the updated data
+                    .select();
 
                 if (error) {
                     throw error;
                 }
-                console.log('Person updated:', data);
-                closeModal();
-                fetchPersons(); // Refresh table
-                alert('Ticket updated successfully!');
+
+                // Check if name, ticket_price, or quantity changed to record a transaction
+                if (oldMemberData.name !== memberData.name ||
+                    oldMemberData.ticket_price !== memberData.ticket_price ||
+                    oldMemberData.quantity !== memberData.quantity) {
+
+                    const transactionAmountChange = (memberData.ticket_price * memberData.quantity) - (oldMemberData.ticket_price * oldMemberData.quantity);
+                    const transactionDescription = `Updated ticket details for ${memberData.name}. Old: ${oldMemberData.quantity} x $${oldMemberData.ticket_price}, New: ${memberData.quantity} x $${memberData.ticket_price}. Change in value: $${transactionAmountChange.toFixed(2)}.`;
+
+                    const { error: transactionError } = await supabase
+                        .from('transactions_person') // Changed to transactions_person
+                        .insert({
+                            person_id: id, // Correct foreign key column name
+                            amount: transactionAmountChange,
+                            transaction_type: 'Ticket_Update',
+                            description: transactionDescription,
+                            reference_code: oldMemberData.reference_code || 'N/A' // Use existing reference code
+                        });
+
+                    if (transactionError) {
+                        console.error('Error recording ticket update transaction:', transactionError.message);
+                        alert(`Warning: Could not record transaction for ticket update (${transactionError.message}). Member details updated.`);
+                    }
+                }
+
+                console.log('Group member updated:', data);
+                closeGroupMemberModal();
+                fetchGroupMembers(); // Refresh table
+                alert('Member ticket details updated successfully!');
             } catch (error) {
-                console.error('Error updating person:', error.message);
-                alert(`Error updating ticket: ${error.message}`);
+                console.error('Error updating group member:', error.message);
+                alert(`Error updating member: ${error.message}`);
             }
         }
 
-        async function deletePerson(id) {
+        async function deleteGroupMember(id, name, ticketPrice, quantity) {
+            if (!confirm(`Are you sure you want to delete ${name}'s record (${quantity} x $${ticketPrice} tickets)? This will also record a 'Ticket_Remove' transaction.`)) {
+                return;
+            }
+
             try {
-                const { error } = await supabase
+                // First, record the transaction for ticket removal
+                const transactionAmount = -1 * (ticketPrice * quantity); // Negative amount for removal
+                const transactionDescription = `Removed all tickets (${quantity} x $${ticketPrice}) for ${name}.`;
+                const { error: transactionError } = await supabase
+                    .from('transactions_person') // Changed to transactions_person
+                    .insert({
+                        person_id: id, // Correct foreign key column name
+                        amount: transactionAmount,
+                        transaction_type: 'Ticket_Remove',
+                        description: transactionDescription,
+                        reference_code: 'N/A' // Or prompt for it if necessary
+                    });
+
+                if (transactionError) {
+                    console.error('Error recording delete transaction:', transactionError.message);
+                    alert(`Warning: Could not record transaction for ticket removal (${transactionError.message}). Proceeding with member deletion.`);
+                    // Don't throw, try to delete the member anyway
+                }
+
+                // Then, delete the group member record
+                const { error: deleteError } = await supabase
                     .from('persons')
                     .delete()
                     .eq('id', id);
 
-                if (error) {
-                    throw error;
+                if (deleteError) {
+                    throw deleteError;
                 }
-                console.log('Person deleted:', id);
-                fetchPersons(); // Refresh table
-                alert('Ticket deleted successfully!');
+                console.log('Group member deleted:', id);
+                fetchGroupMembers(); // Refresh table
+                alert('Member record and associated tickets deleted successfully!');
             } catch (error) {
-                console.error('Error deleting person:', error.message);
-                alert(`Error deleting ticket: ${error.message}`);
+                console.error('Error deleting group member:', error.message);
+                alert(`Error deleting member: ${error.message}`);
             }
         }
 
-        // --- Modal Handling ---
-        function openAddModal() {
-            modalTitle.textContent = 'Add New Ticket';
-            personIdField.value = ''; // Clear ID for new record
-            personForm.reset(); // Clear form fields
-            personModal.classList.remove('hidden');
+        // --- Transaction Operations ---
+        async function recordPayment(paymentData) {
+            try {
+                // 1. Insert into transactions table
+                const { error: transactionError } = await supabase
+                    .from('transactions_person') // Changed to transactions_person
+                    .insert({
+                        person_id: paymentData.member_id, // Correct foreign key column name
+                        amount: paymentData.amount,
+                        transaction_type: paymentData.transaction_type,
+                        reference_code: paymentData.reference_code,
+                        notes: paymentData.notes,
+                        description: `${paymentData.transaction_type} of $${paymentData.amount.toFixed(2)} for ${paymentData.member_name}`
+                    });
+
+                if (transactionError) {
+                    throw transactionError;
+                }
+
+                // 2. Update the persons table's last_payment_amount and date
+                const { error: updateError } = await supabase
+                    .from('persons')
+                    .update({
+                        last_payment_amount: paymentData.amount,
+                        last_payment_date: new Date().toISOString()
+                    })
+                    .eq('id', paymentData.member_id);
+
+                if (updateError) {
+                    throw updateError;
+                }
+
+                alert(`Payment of $${paymentData.amount.toFixed(2)} for ${paymentData.member_name} recorded successfully!`);
+                closePaymentModal();
+                fetchGroupMembers(); // Refresh table
+            } catch (error) {
+                console.error('Error recording payment:', error.message);
+                alert(`Error recording payment: ${error.message}`);
+            }
         }
 
-        async function openEditModal(id) {
-            modalTitle.textContent = 'Edit Ticket';
-            personModal.classList.remove('hidden');
+        // --- Add Ticket Operations ---
+        async function updateGroupMemberTickets(memberId, currentTicketName, currentTicketPrice, quantityToAdd, newTicketType = null, newTicketPrice = null, referenceCode) {
+            try {
+                // Fetch the current member data to get the existing quantity and other details
+                const { data: member, error: fetchError } = await supabase
+                    .from('persons')
+                    .select('quantity, ticket_price, name')
+                    .eq('id', memberId)
+                    .single();
+
+                if (fetchError || !member) {
+                    console.error('Error fetching member for adding tickets:', fetchError?.message);
+                    alert('Could not fetch member data to update tickets.');
+                    return;
+                }
+
+                const updatedQuantity = member.quantity + quantityToAdd;
+                const finalTicketType = newTicketType && newTicketType.trim() !== '' ? newTicketType.trim() : member.name;
+                const finalTicketPrice = newTicketPrice !== null && newTicketPrice !== '' ? parseFloat(newTicketPrice) : member.ticket_price;
+                const transactionAmount = quantityToAdd * finalTicketPrice; // Value of the tickets being added
+                const transactionDescription = `Added ${quantityToAdd} tickets (type: ${finalTicketType}, price: $${finalTicketPrice.toFixed(2)}) for ${member.name}. Total: $${transactionAmount.toFixed(2)}.`;
+
+                // 1. Update the persons table
+                const { error: updateMemberError } = await supabase
+                    .from('persons')
+                    .update({
+                        quantity: updatedQuantity,
+                        name: finalTicketType, // Update member's primary ticket type name
+                        ticket_price: finalTicketPrice // Update member's primary ticket price
+                    })
+                    .eq('id', memberId);
+
+                if (updateMemberError) {
+                    throw updateMemberError;
+                }
+
+                // 2. Insert into transactions_person table
+                const { error: transactionError } = await supabase
+                    .from('transactions_person') // Changed to transactions_person
+                    .insert({
+                        person_id: memberId, // Correct foreign key column name
+                        amount: transactionAmount,
+                        transaction_type: 'Ticket_Add',
+                        description: transactionDescription,
+                        reference_code: referenceCode
+                    });
+
+                if (transactionError) {
+                    throw transactionError;
+                }
+
+                console.log('Group member tickets updated and transaction recorded.');
+                closeAddTicketModal();
+                fetchGroupMembers(); // Refresh table
+                alert('Tickets updated and transaction recorded successfully!');
+            } catch (error) {
+                console.error('Error updating member tickets:', error.message);
+                alert(`Error updating tickets: ${error.message}`);
+            }
+        }
+
+
+        // --- Modal Handling ---
+
+        // Group Member (Ticket) Modal Functions
+        function openGroupMemberModalForAdd() {
+            groupMemberModalTitle.textContent = 'Add New Member & Ticket';
+            memberIdField.value = ''; // Clear ID for new record
+            groupMemberForm.reset(); // Clear form fields
+            groupMemberModal.classList.remove('hidden');
+        }
+
+        async function openGroupMemberModalForEdit(id) {
+            groupMemberModalTitle.textContent = 'Edit Member & Ticket';
+            groupMemberModal.classList.remove('hidden');
 
             try {
                 const { data, error } = await supabase
                     .from('persons')
                     .select('*')
                     .eq('id', id)
-                    .single(); // Expect a single record
+                    .single();
 
                 if (error) {
                     throw error;
                 }
 
                 // Populate form fields with existing data
-                personIdField.value = data.id;
-                personNameField.value = data.name;
-                personTicketPriceField.value = data.ticket_price;
-                personQuantityField.value = data.quantity;
+                memberIdField.value = data.id;
+                memberNameField.value = data.name;
+                memberTicketPriceField.value = data.ticket_price;
+                memberQuantityField.value = data.quantity;
 
             } catch (error) {
-                console.error('Error fetching person for edit:', error.message);
-                alert(`Error loading ticket details for edit: ${error.message}`);
-                closeModal();
+                console.error('Error fetching member for edit:', error.message);
+                alert(`Error loading member details for edit: ${error.message}`);
+                closeGroupMemberModal();
             }
         }
 
-        function closeModal() {
-            personModal.classList.add('hidden');
+        function closeGroupMemberModal() {
+            groupMemberModal.classList.add('hidden');
         }
 
-        // --- Event Handlers ---
+        // Payment Modal Functions
+        function openPaymentModal(id, name, price, quantity, referenceCode) {
+            paymentMemberIdField.value = id;
+            paymentMemberNameDisplay.textContent = name;
+            paymentAmountField.value = (parseFloat(price) * parseInt(quantity)).toFixed(2); // Pre-fill with total amount due
+            paymentTransactionTypeField.value = 'Payment'; // Default to Payment
+            paymentReferenceCodeField.value = ''; // User confirms
+            paymentNotesField.value = '';
+            paymentModal.classList.remove('hidden');
+        }
 
-        // Handle Add New Ticket button click
-        addPersonButton.addEventListener('click', openAddModal);
+        function closePaymentModal() {
+            paymentModal.classList.add('hidden');
+        }
 
-        // Handle close modal button click
-        closeModalButton.addEventListener('click', closeModal);
-        cancelFormButton.addEventListener('click', closeModal);
+        // Add Ticket Modal Functions
+        function openAddTicketModal(id, name, price, quantity, referenceCode) {
+            addTicketMemberIdField.value = id;
+            addTicketMemberNameDisplay.textContent = name;
+            currentTicketDisplay.textContent = `${name} @ $${parseFloat(price).toFixed(2)} (Current Quantity: ${quantity})`;
+            addTicketQuantityField.value = 1; // Default to adding 1
+            newTicketTypeField.value = '';
+            newTicketPriceField.value = '';
+            addTicketReferenceCodeField.value = ''; // User confirms
+            addTicketModal.classList.remove('hidden');
+        }
 
-        // Handle form submission (Add or Edit)
-        personForm.addEventListener('submit', async (event) => {
-            event.preventDefault(); // Prevent default form submission
+        function closeAddTicketModal() {
+            addTicketModal.classList.add('hidden');
+        }
 
-            const id = personIdField.value;
-            const name = personNameField.value.trim();
-            const ticketPrice = parseFloat(personTicketPriceField.value);
-            const quantity = parseInt(personQuantityField.value);
+
+        // --- Event Listeners ---
+
+        // Handle Add New Member button click (from header)
+        document.getElementById('add-member-header-btn').addEventListener('click', openGroupMemberModalForAdd);
+
+        // Close buttons for all modals
+        closeGroupMemberModalButton.addEventListener('click', closeGroupMemberModal);
+        cancelGroupMemberFormButton.addEventListener('click', closeGroupMemberModal);
+        closePaymentModalButton.addEventListener('click', closePaymentModal);
+        cancelPaymentFormButton.addEventListener('click', closePaymentModal);
+        closeAddTicketModalButton.addEventListener('click', closeAddTicketModal);
+        cancelAddTicketFormButton.addEventListener('click', closeAddTicketModal);
+
+        // Handle Group Member (Ticket) Form submission
+        groupMemberForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const id = memberIdField.value;
+            const name = memberNameField.value.trim();
+            const ticketPrice = parseFloat(memberTicketPriceField.value);
+            const quantity = parseInt(memberQuantityField.value);
 
             if (!name || isNaN(ticketPrice) || isNaN(quantity) || quantity <= 0) {
                 alert('Please fill in all fields correctly (Ticket Price must be a number, Quantity must be a positive number).');
                 return;
             }
 
-            const personData = {
+            const memberData = {
                 name: name,
                 ticket_price: ticketPrice,
                 quantity: quantity
             };
 
             if (id) {
-                // Editing existing record
-                await updatePerson(id, personData);
+                // If editing, check if ticket type, price, or quantity changed to record a transaction
+                const { data: oldMember, error: fetchError } = await supabase
+                    .from('persons') // Fetch from persons table
+                    .select('name, ticket_price, quantity, reference_code') // Also get reference_code
+                    .eq('id', id)
+                    .single();
+
+                if (fetchError || !oldMember) {
+                    console.error('Error fetching old member data for update comparison:', fetchError?.message);
+                    alert('Could not fetch original member data for update. Please try again.');
+                    return;
+                }
+
+                await updateGroupMember(id, memberData, oldMember); // Pass oldMember for comparison
             } else {
-                // Adding new record
-                await addPerson(personData);
+                await addGroupMember(memberData);
             }
         });
 
-        // Handle Delete button click
-        function handleDeletePerson(id) {
-            if (confirm('Are you sure you want to delete this ticket record? This action cannot be undone.')) {
-                deletePerson(id);
+        // Handle Payment Form submission
+        paymentForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const memberId = paymentMemberIdField.value;
+            const memberName = paymentMemberNameDisplay.textContent;
+            const amount = parseFloat(paymentAmountField.value);
+            const transactionType = paymentTransactionTypeField.value;
+            const referenceCode = paymentReferenceCodeField.value.trim();
+            const notes = paymentNotesField.value.trim();
+
+            if (!memberId || isNaN(amount) || amount <= 0 || !transactionType || !referenceCode) {
+                alert('Please fill in all payment fields correctly.');
+                return;
             }
-        }
 
-        // Handle Add Payment button click (Conceptual)
-        function handleAddPayment(id, name, price, quantity) {
-            // For a simple demo, we'll just log and confirm.
-            // In a real application, you might:
-            // 1. Open a new modal for payment details (amount, method, date).
-            // 2. Insert a record into a separate 'payments' table.
-            // 3. Update the 'persons' table (e.g., mark as 'paid', or update a 'balance_due' field).
-            const totalAmount = parseFloat(price) * parseInt(quantity);
-            const paymentConfirmation = confirm(`Confirming payment for ticket ID: ${id}\nName: ${name}\nTotal Amount Due: $${totalAmount.toFixed(2)}\n\n(This is a simulated payment. In a real app, you'd process payment here.)`);
+            // Verify reference code against the persons table before recording transaction
+            const { data: person, error: personError } = await supabase
+                .from('persons')
+                .select('reference_code')
+                .eq('id', memberId)
+                .single();
 
-            if (paymentConfirmation) {
-                alert(`Payment for ${name} (ID: ${id}) for $${totalAmount.toFixed(2)} would be processed now.`);
-                // Here, you would typically call a function to update the 'persons' table
-                // For example, if you had a 'is_paid' boolean column:
-                // updatePerson(id, { is_paid: true });
-                // Or if you had a 'balance_due' column:
-                // updatePerson(id, { balance_due: 0 });
-                // Then refresh the table
-                // fetchPersons();
+            if (personError || !person || person.reference_code !== referenceCode) {
+                alert('Invalid Reference Code. Please ensure it matches the member\'s code.');
+                console.error('Reference code verification failed:', personError?.message || 'Code mismatch');
+                return;
             }
-        }
 
-        // --- Inactivity Event Listeners ---
-        document.addEventListener("mousemove", resetInactivityTimer);
-        document.addEventListener("keydown", resetInactivityTimer);
-        document.addEventListener("click", resetInactivityTimer);
-        document.addEventListener("scroll", resetInactivityTimer);
+            const paymentData = {
+                member_id: memberId,
+                member_name: memberName,
+                amount: amount,
+                transaction_type: transactionType,
+                reference_code: referenceCode,
+                notes: notes
+            };
 
-        // Call checkAuthAndLoadData when the page loads
-        document.addEventListener('DOMContentLoaded', checkAuthAndLoadData);
+            await recordPayment(paymentData);
+        });
+
+        // Handle Add Ticket Form submission
+        addTicketForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const memberId = addTicketMemberIdField.value;
+            const memberName = addTicketMemberNameDisplay.textContent;
+            const quantityToAdd = parseInt(addTicketQuantityField.value);
+            const newTicketType = newTicketTypeField.value.trim();
+            const newTicketPrice = newTicketPriceField.value.trim(); // Get as string first to check if empty
+            const referenceCode = addTicketReferenceCodeField.value.trim();
+
+            if (!memberId || isNaN(quantityToAdd) || quantityToAdd <= 0 || !referenceCode) {
+                alert('Please fill in quantity and confirm reference code.');
+                return;
+            }
+
+            // Verify reference code against the persons table before updating tickets
+            const { data: person, error: personError } = await supabase
+                .from('persons')
+                .select('reference_code')
+                .eq('id', memberId)
+                .single();
+
+            if (personError || !person || person.reference_code !== referenceCode) {
+                alert('Invalid Reference Code. Please ensure it matches the member\'s code.');
+                console.error('Reference code verification failed:', personError?.message || 'Code mismatch');
+                return;
+            }
+
+            let finalNewTicketPrice = null;
+            if (newTicketPrice !== '') {
+                finalNewTicketPrice = parseFloat(newTicketPrice);
+                if (isNaN(finalNewTicketPrice) || finalNewTicketPrice <= 0) {
+                    alert('New Ticket Price must be a positive number if provided.');
+                    return;
+                }
+            }
+
+            await updateGroupMemberTickets(memberId, memberName, null, quantityToAdd, newTicketType, finalNewTicketPrice, referenceCode);
+        });
+
+
+        // --- Initial Load ---
+        checkAuthAndLoadData();
+
+        // --- Event Listeners for Inactivity Reset ---
+        ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'].forEach(eventName => {
+            document.addEventListener(eventName, resetInactivityTimer, true);
+        });
     </script>
 </body>
 </html>
