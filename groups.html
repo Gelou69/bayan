@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,205 +7,218 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-    :root {
-        --primary-color: #2C3E50;
-        --accent-color: #F9AA33;
-        --bg-color: #F4F7F9;
-        --card-bg: #ffffff;
-        --text-color: #2A2E35;
-        --muted-text: #7A8B99;
-        --shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-        --transition-speed: 0.3s;
-    }
+        /* Custom styles for modals, hidden class, dropdowns, etc. */
+        .hidden {
+            display: none !important;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+        .dropdown-container {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.25rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 50;
+            min-width: 180px;
+            display: none; /* Hidden by default */
+        }
+        .dropdown-menu button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            text-align: left;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: #4a5568;
+        }
+        .dropdown-menu button i {
+            margin-right: 0.5rem;
+            width: 1rem; /* Ensure consistent icon spacing */
+        }
+        .dropdown-menu button:hover {
+            background-color: #f7fafc;
+        }
+        .uuid-cell {
+            font-family: 'SF Mono', 'Segoe UI Mono', monospace;
+            font-size: 0.75rem;
+            color: #6B7280;
+            word-break: break-all;
+        }
+        .code-cell {
+             font-family: 'SF Mono', 'Segoe UI Mono', monospace;
+            font-size: 0.875rem;
+        }
+        .timestamp-cell {
+            font-size: 0.875rem;
+            color: #6B7280;
+        }
+        .numeric-cell {
+            text-align: right;
+            font-family: 'SF Mono', 'Segoe UI Mono', monospace;
+        }
+        .action-buttons {
+            text-align: center;
+        }
+        .kebab-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            color: #4A5568;
+            padding: 0.25rem;
+        }
+        .kebab-button:hover {
+            color: #2D3748;
+        }
+         #logout-modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+        .logout-modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border-radius: 5px;
+            text-align: center;
+            position: relative;
+        }
+        .logout-modal-content button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        .logout-modal-content button:hover {
+            background-color: #0056b3;
+        }
+        .countdown {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #dc3545;
+            margin-top: 10px;
+        }
+         .header {
+            background-color: var(--primary-color);
+            padding: 1rem 2rem;
+            box-shadow: var(--box-shadow-medium);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
 
-    body {
-        background: var(--bg-color);
-        color: var(--text-color);
-        font-family: 'Inter', sans-serif;
-        line-height: 1.6;
-        transition: background var(--transition-speed);
-    }
-
-   .navbar {
+       .navbar {
     display: flex
 ;
     justify-content: flex-end;
-    gap: 1rem;
-    background: #4a6572;
-    padding: 1.2rem 2rem;
-    border-radius: 1rem;
-    box-shadow: var(--shadow);
-    margin-bottom: 2rem;
-    animation: slideInDown 0.6s ease;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #4a6572;
+    color: white;
 }
 
-    .navbar a,
-    .navbar button {
-        font-weight: 600;
-        color: white;
-        padding: 0.6rem 1.2rem;
-        border-radius: 0.6rem;
-        transition: all var(--transition-speed);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .navbar a:hover,
-    .navbar button:hover {
-        color: rgb(255, 255, 255);
-        background: rgba(255, 255, 255, 0.347);
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
-    }
-
-    .max-w-7xl {
-        background: var(--card-bg);
-        padding: 2rem;
-        border-radius: 1.2rem;
-        box-shadow: var(--shadow);
-        animation: fadeIn 0.6s ease;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        overflow: hidden;
-        border-radius: 0.75rem;
-    }
-
-    table thead {
-        background: #f1f5f9;
-    }
-
-    table th,
-    table td {
-        padding: 1rem;
-        text-align: left;
-        transition: background 0.3s ease;
-    }
-
-    table tbody tr:hover {
-        background: #f9fafb;
-    }
-
-    .modal-content {
-        animation: fadeIn 0.4s ease;
-        background: white;
-        border-radius: 1rem;
-        box-shadow: var(--shadow);
-        padding: 2rem;
-    }
-
-    /* Custom Buttons */
-    .btn {
-        padding: 0.7rem 1.4rem;
-        border-radius: 0.5rem;
-        font-weight: 600;
-        transition: all var(--transition-speed);
-    }
-
-    .btn-primary {
-        background: var(--primary-color);
-        color: white;
-    }
-
-    .btn-primary:hover {
-        background: #1a252f;
-    }
-
-    .btn-accent {
-        background: var(--accent-color);
-        color: white;
-    }
-
-    .btn-accent:hover {
-        background: #e39200;
-    }
-
-    .btn-muted {
-        background: #e2e8f0;
-        color: var(--text-color);
-    }
-
-    .btn-muted:hover {
-        background: #cbd5e1;
-    }
-
-    /* Subtle card-like hover effects */
-    .hover-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .hover-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
-    }
-
-    /* Dropdown styling */
-    .dropdown-menu {
-        animation: popIn 0.2s ease-out;
-        background: white;
-        border-radius: 0.5rem;
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-    }
-
-    .dropdown-menu button {
-        padding: 0.75rem 1rem;
-        width: 100%;
-        text-align: left;
-        color: var(--text-color);
-        transition: background 0.3s ease;
-    }
-
-    .dropdown-menu button:hover {
-        background-color: var(--accent-color);
-        color: white;
-    }
-
-    /* Animations */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: scale(0.96);
+        .navbar a,
+        .navbar button {
+            color: var(--light-text);
+            text-decoration: none;
+            padding: 0.75rem 1.25rem;
+            margin-left: 1rem;
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: 6px;
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+            position: relative;
+            overflow: hidden; /* For pseudo-element animation */
+            background: none; /* Reset button default background */
+            border: none; /* Reset button default border */
+            cursor: pointer;
         }
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
 
-    @keyframes slideInDown {
-        0% {
-            transform: translateY(-20px);
-            opacity: 0;
+        .navbar a:hover,
+        .navbar button:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px); /* Subtle lift */
         }
-        100% {
-            transform: translateY(0);
-            opacity: 1;
+        
+        .navbar a::before,
+        .navbar button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.1); /* Subtle highlight */
+            transition: left 0.3s ease;
+            z-index: 0;
         }
-    }
 
-    @keyframes popIn {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
+        .navbar a:hover::before,
+        .navbar button:hover::before {
+            left: 0;
         }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-</style>
 
+        .navbar a span,
+        .navbar button span {
+            position: relative;
+            z-index: 1;
+        }
+
+    </style>
 </head>
 <body class="bg-gray-100 p-8">
+     <nav class="header">
     <div class="navbar">
         <a href="profile.html">Home</a>
         <a href="groups.html">Groups</a>
         <a href="person.html">Persons</a>
+        <button id="logout-button">Logout</button>
     </div>
-
-
 
     <div class="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow-md">
         <h1 class="text-2xl font-bold mb-6 text-gray-800">Group Management Dashboard</h1>
@@ -1399,7 +1413,6 @@
                 console.log("Automatic logout timer started.");
             }
         });
-        
 
     </script>
 </body>
