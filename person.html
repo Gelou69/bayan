@@ -196,6 +196,7 @@
         }
 
         /* --- Table Actions (Dropdown) --- */
+        
         .dropdown {
             position: relative;
             display: inline-block;
@@ -229,10 +230,11 @@
             opacity: 0;
             transform: translateY(10px);
             transition: opacity 0.3s ease, transform 0.3s ease;
-            overflow: hidden; /* For button borders */
+            max-height: 200px; /* Set a max height */
+            overflow-y: auto; /* Enable vertical scrolling */
+            border: 1px solid var(--border-color); /* Add border for better visual */
         }
-
-        .dropdown.show .dropdown-content {
+   .dropdown.show .dropdown-content {
             display: block;
             opacity: 1;
             transform: translateY(0);
@@ -462,7 +464,7 @@
     </div>
     </nav>
     <div id="main-content" class="table-container content-hidden">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Group Members Data</h2>
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Person</h2>
         <table>
             <thead>
                 <tr>
@@ -472,11 +474,10 @@
                     <th>Quantity</th>
                     <th>Reference Code</th>
                     <th>Last Payment</th>
-                    <th>Balance</th> <!-- NEW COLUMN -->
-                    <th>Created At</th>
+                    <th>Balance</th> <th>Created At</th>
                     <th>
                         Actions
-                        <button id="add-member-header-btn" class="add-member-header-btn">Add Member</button>
+                        <button id="add-member-header-btn" class="add-member-header-btn">Add Person</button>
                     </th>
                 </tr>
             </thead>
@@ -630,10 +631,10 @@
         const newTicketPriceField = document.getElementById('new-ticket-price');
         const addTicketReferenceCodeField = document.getElementById('add-ticket-reference-code');
 
-        // --- Inactivity Timer Configuration ---
-        const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
-        const LOGOUT_REDIRECT_URL = "login.html"; // Redirect to your login page on inactivity
-        let inactivityTimeoutId; // Variable to store the inactivity timeout ID
+
+        const INACTIVITY_TIMEOUT = 5 * 60 * 1000; 
+        const LOGOUT_REDIRECT_URL = "login.html"; 
+        let inactivityTimeoutId;
 
         // --- Inactivity Handling Functions ---
         async function performLogout() {
@@ -654,7 +655,6 @@
         // --- Authentication and Data Loading ---
         async function checkAuthAndLoadData() {
             const { data: { session }, error } = await supabase.auth.getSession();
-
             if (error) {
                 console.error("Error getting session:", error.message);
                 errorMessage.textContent = `Authentication error: ${error.message}. Redirecting to login...`;
@@ -687,7 +687,6 @@
                     .from('persons')
                     .select('*')
                     .order('created_at', { ascending: false });
-
                 if (error) throw error;
 
                 if (data.length === 0) {
@@ -699,7 +698,6 @@
                             .from('transactions_person')
                             .select('amount, transaction_type')
                             .eq('person_id', member.id);
-
                         let totalPayments = 0;
                         let totalRefunds = 0;
 
@@ -804,7 +802,6 @@
                     .from('persons')
                     .insert([{ ...memberData, reference_code: referenceCode, last_payment_amount: 0.00 }]) // Initialize last payment
                     .select();
-
                 if (error) {
                     throw error;
                 }
@@ -825,19 +822,15 @@
                     .update(memberData)
                     .eq('id', id)
                     .select();
-
                 if (error) {
                     throw error;
                 }
 
                 // Check if name, ticket_price, or quantity changed to record a transaction
-                if (oldMemberData.name !== memberData.name ||
-                    oldMemberData.ticket_price !== memberData.ticket_price ||
-                    oldMemberData.quantity !== memberData.quantity) {
-
+                if (oldMemberData.name !== memberData.name || oldMemberData.ticket_price !== memberData.ticket_price || oldMemberData.quantity !== memberData.quantity) {
                     const transactionAmountChange = (memberData.ticket_price * memberData.quantity) - (oldMemberData.ticket_price * oldMemberData.quantity);
                     const transactionDescription = `Updated ticket details for ${memberData.name}. Old: ${oldMemberData.quantity} x $${oldMemberData.ticket_price}, New: ${memberData.quantity} x $${memberData.ticket_price}. Change in value: $${transactionAmountChange.toFixed(2)}.`;
-
+                    
                     const { error: transactionError } = await supabase
                         .from('transactions_person') // Changed to transactions_person
                         .insert({
@@ -847,7 +840,6 @@
                             description: transactionDescription,
                             reference_code: oldMemberData.reference_code || 'N/A' // Use existing reference code
                         });
-
                     if (transactionError) {
                         console.error('Error recording ticket update transaction:', transactionError.message);
                         alert(`Warning: Could not record transaction for ticket update (${transactionError.message}). Member details updated.`);
@@ -864,45 +856,38 @@
             }
         }
 
-        async function deleteGroupMember(id, name, ticketPrice, quantity) {
-            if (!confirm(`Are you sure you want to delete ${name}'s record (${quantity} x $${ticketPrice} tickets)? This will also record a 'Ticket_Remove' transaction.`)) {
+        async function handleDeleteGroupMember(id, name, ticketPrice, quantity) {
+            if (!confirm(`Are you sure you want to delete ${name}'s record (${quantity} x $${ticketPrice} tickets)? This will also delete associated transactions.`)) {
                 return;
             }
 
             try {
-                // First, record the transaction for ticket removal
-                const transactionAmount = -1 * (ticketPrice * quantity); // Negative amount for removal
-                const transactionDescription = `Removed all tickets (${quantity} x $${ticketPrice}) for ${name}.`;
-                const { error: transactionError } = await supabase
-                    .from('transactions_person') // Changed to transactions_person
-                    .insert({
-                        person_id: id, // Correct foreign key column name
-                        amount: transactionAmount,
-                        transaction_type: 'Ticket_Remove',
-                        description: transactionDescription,
-                        reference_code: 'N/A' // Or prompt for it if necessary
-                    });
+                // First, delete all associated transactions
+                const { error: deleteTransactionsError } = await supabase
+                    .from('transactions_person')
+                    .delete()
+                    .eq('person_id', id);
 
-                if (transactionError) {
-                    console.error('Error recording delete transaction:', transactionError.message);
-                    alert(`Warning: Could not record transaction for ticket removal (${transactionError.message}). Proceeding with member deletion.`);
-                    // Don't throw, try to delete the member anyway
+                if (deleteTransactionsError) {
+                    throw deleteTransactionsError;
                 }
+                console.log(`Deleted transactions for person ID: ${id}`);
 
                 // Then, delete the group member record
-                const { error: deleteError } = await supabase
+                const { error: deleteMemberError } = await supabase
                     .from('persons')
                     .delete()
                     .eq('id', id);
 
-                if (deleteError) {
-                    throw deleteError;
+                if (deleteMemberError) {
+                    throw deleteMemberError;
                 }
+
                 console.log('Group member deleted:', id);
                 fetchGroupMembers(); // Refresh table
-                alert('Member record and associated tickets deleted successfully!');
+                alert('Member record and associated transactions deleted successfully!');
             } catch (error) {
-                console.error('Error deleting group member:', error.message);
+                console.error('Error deleting group member or associated transactions:', error.message);
                 alert(`Error deleting member: ${error.message}`);
             }
         }
@@ -921,7 +906,6 @@
                         notes: paymentData.notes,
                         description: `${paymentData.transaction_type} of $${paymentData.amount.toFixed(2)} for ${paymentData.member_name}`
                     });
-
                 if (transactionError) {
                     throw transactionError;
                 }
@@ -934,7 +918,6 @@
                         last_payment_date: new Date().toISOString()
                     })
                     .eq('id', paymentData.member_id);
-
                 if (updateError) {
                     throw updateError;
                 }
@@ -949,7 +932,7 @@
         }
 
         // --- Add Ticket Operations ---
-        async function updateGroupMemberTickets(memberId, currentTicketName, currentTicketPrice, quantityToAdd, newTicketType = null, newTicketPrice = null, referenceCode) {
+        async function updateGroupMemberTickets(memberId, memberName, currentTicketPrice, quantityToAdd, newTicketType = null, newTicketPrice = null, referenceCode) {
             try {
                 // Fetch the current member data to get the existing quantity and other details
                 const { data: member, error: fetchError } = await supabase
@@ -967,6 +950,7 @@
                 const updatedQuantity = member.quantity + quantityToAdd;
                 const finalTicketType = newTicketType && newTicketType.trim() !== '' ? newTicketType.trim() : member.name;
                 const finalTicketPrice = newTicketPrice !== null && newTicketPrice !== '' ? parseFloat(newTicketPrice) : member.ticket_price;
+                
                 const transactionAmount = quantityToAdd * finalTicketPrice; // Value of the tickets being added
                 const transactionDescription = `Added ${quantityToAdd} tickets (type: ${finalTicketType}, price: $${finalTicketPrice.toFixed(2)}) for ${member.name}. Total: $${transactionAmount.toFixed(2)}.`;
 
@@ -979,7 +963,6 @@
                         ticket_price: finalTicketPrice // Update member's primary ticket price
                     })
                     .eq('id', memberId);
-
                 if (updateMemberError) {
                     throw updateMemberError;
                 }
@@ -994,7 +977,6 @@
                         description: transactionDescription,
                         reference_code: referenceCode
                     });
-
                 if (transactionError) {
                     throw transactionError;
                 }
@@ -1009,9 +991,7 @@
             }
         }
 
-
         // --- Modal Handling ---
-
         // Group Member (Ticket) Modal Functions
         function openGroupMemberModalForAdd() {
             groupMemberModalTitle.textContent = 'Add New Member & Ticket';
@@ -1023,24 +1003,20 @@
         async function openGroupMemberModalForEdit(id) {
             groupMemberModalTitle.textContent = 'Edit Member & Ticket';
             groupMemberModal.classList.remove('hidden');
-
             try {
                 const { data, error } = await supabase
                     .from('persons')
                     .select('*')
                     .eq('id', id)
                     .single();
-
                 if (error) {
                     throw error;
                 }
-
                 // Populate form fields with existing data
                 memberIdField.value = data.id;
                 memberNameField.value = data.name;
                 memberTicketPriceField.value = data.ticket_price;
                 memberQuantityField.value = data.quantity;
-
             } catch (error) {
                 console.error('Error fetching member for edit:', error.message);
                 alert(`Error loading member details for edit: ${error.message}`);
@@ -1053,13 +1029,11 @@
         }
 
         // Payment Modal Functions
-        function openPaymentModal(id, name, price, quantity, referenceCode) {
-            paymentMemberIdField.value = id;
-            paymentMemberNameDisplay.textContent = name;
-            paymentAmountField.value = (parseFloat(price) * parseInt(quantity)).toFixed(2); // Pre-fill with total amount due
-            paymentTransactionTypeField.value = 'Payment'; // Default to Payment
-            paymentReferenceCodeField.value = ''; // User confirms
-            paymentNotesField.value = '';
+        function openPaymentModal(memberId, memberName, ticketPrice, quantity, referenceCode) {
+            paymentMemberIdField.value = memberId;
+            paymentMemberNameDisplay.textContent = memberName;
+            paymentReferenceCodeField.value = referenceCode; // Pre-fill with member's reference code
+            paymentForm.reset(); // Clear form fields
             paymentModal.classList.remove('hidden');
         }
 
@@ -1068,14 +1042,12 @@
         }
 
         // Add Ticket Modal Functions
-        function openAddTicketModal(id, name, price, quantity, referenceCode) {
-            addTicketMemberIdField.value = id;
-            addTicketMemberNameDisplay.textContent = name;
-            currentTicketDisplay.textContent = `${name} @ $${parseFloat(price).toFixed(2)} (Current Quantity: ${quantity})`;
-            addTicketQuantityField.value = 1; // Default to adding 1
-            newTicketTypeField.value = '';
-            newTicketPriceField.value = '';
-            addTicketReferenceCodeField.value = ''; // User confirms
+        async function openAddTicketModal(memberId, memberName, ticketPrice, quantity, referenceCode) {
+            addTicketMemberIdField.value = memberId;
+            addTicketMemberNameDisplay.textContent = memberName;
+            currentTicketDisplay.textContent = `${quantity} x $${parseFloat(ticketPrice).toFixed(2)}`; // Display current ticket info
+            addTicketReferenceCodeField.value = referenceCode; // Pre-fill reference code
+            addTicketForm.reset(); // Clear form fields
             addTicketModal.classList.remove('hidden');
         }
 
@@ -1083,77 +1055,59 @@
             addTicketModal.classList.add('hidden');
         }
 
-
         // --- Event Listeners ---
-
-        // Handle Add New Member button click (from header)
+        document.getElementById('logout-button').addEventListener('click', performLogout);
         document.getElementById('add-member-header-btn').addEventListener('click', openGroupMemberModalForAdd);
 
-        // Close buttons for all modals
+        // Group Member Modal Event Listeners
         closeGroupMemberModalButton.addEventListener('click', closeGroupMemberModal);
         cancelGroupMemberFormButton.addEventListener('click', closeGroupMemberModal);
-        closePaymentModalButton.addEventListener('click', closePaymentModal);
-        cancelPaymentFormButton.addEventListener('click', closePaymentModal);
-        closeAddTicketModalButton.addEventListener('click', closeAddTicketModal);
-        cancelAddTicketFormButton.addEventListener('click', closeAddTicketModal);
-
-        // Handle Group Member (Ticket) Form submission
         groupMemberForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-
             const id = memberIdField.value;
-            const name = memberNameField.value.trim();
-            const ticketPrice = parseFloat(memberTicketPriceField.value);
-            const quantity = parseInt(memberQuantityField.value);
-
-            if (!name || isNaN(ticketPrice) || isNaN(quantity) || quantity <= 0) {
-                alert('Please fill in all fields correctly (Ticket Price must be a number, Quantity must be a positive number).');
-                return;
-            }
-
             const memberData = {
-                name: name,
-                ticket_price: ticketPrice,
-                quantity: quantity
+                name: memberNameField.value,
+                ticket_price: parseFloat(memberTicketPriceField.value),
+                quantity: parseInt(memberQuantityField.value)
             };
 
             if (id) {
-                // If editing, check if ticket type, price, or quantity changed to record a transaction
-                const { data: oldMember, error: fetchError } = await supabase
-                    .from('persons') // Fetch from persons table
-                    .select('name, ticket_price, quantity, reference_code') // Also get reference_code
+                // Fetch old data to determine if a transaction needs to be recorded
+                const { data: oldMemberData, error: fetchOldError } = await supabase
+                    .from('persons')
+                    .select('name, ticket_price, quantity, reference_code')
                     .eq('id', id)
                     .single();
 
-                if (fetchError || !oldMember) {
-                    console.error('Error fetching old member data for update comparison:', fetchError?.message);
-                    alert('Could not fetch original member data for update. Please try again.');
+                if (fetchOldError) {
+                    console.error('Error fetching old member data:', fetchOldError.message);
+                    alert('Could not fetch old member data for update. Please try again.');
                     return;
                 }
-
-                await updateGroupMember(id, memberData, oldMember); // Pass oldMember for comparison
+                updateGroupMember(id, memberData, oldMemberData);
             } else {
-                await addGroupMember(memberData);
+                addGroupMember(memberData);
             }
         });
 
-        // Handle Payment Form submission
+        // Payment Modal Event Listeners
+        closePaymentModalButton.addEventListener('click', closePaymentModal);
+        cancelPaymentFormButton.addEventListener('click', closePaymentModal);
         paymentForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-
             const memberId = paymentMemberIdField.value;
-            const memberName = paymentMemberNameDisplay.textContent;
             const amount = parseFloat(paymentAmountField.value);
             const transactionType = paymentTransactionTypeField.value;
-            const referenceCode = paymentReferenceCodeField.value.trim();
-            const notes = paymentNotesField.value.trim();
+            const referenceCode = paymentReferenceCodeField.value;
+            const notes = paymentNotesField.value;
+            const memberName = paymentMemberNameDisplay.textContent;
 
-            if (!memberId || isNaN(amount) || amount <= 0 || !transactionType || !referenceCode) {
-                alert('Please fill in all payment fields correctly.');
+            if (isNaN(amount) || amount <= 0) {
+                alert('Amount must be a positive number.');
                 return;
             }
 
-            // Verify reference code against the persons table before recording transaction
+            // Reference code verification
             const { data: person, error: personError } = await supabase
                 .from('persons')
                 .select('reference_code')
@@ -1166,35 +1120,27 @@
                 return;
             }
 
-            const paymentData = {
-                member_id: memberId,
-                member_name: memberName,
-                amount: amount,
-                transaction_type: transactionType,
-                reference_code: referenceCode,
-                notes: notes
-            };
-
-            await recordPayment(paymentData);
+            recordPayment({ member_id: memberId, member_name: memberName, amount, transaction_type: transactionType, reference_code: referenceCode, notes });
         });
 
-        // Handle Add Ticket Form submission
+        // Add Ticket Modal Event Listeners
+        closeAddTicketModalButton.addEventListener('click', closeAddTicketModal);
+        cancelAddTicketFormButton.addEventListener('click', closeAddTicketModal);
         addTicketForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-
             const memberId = addTicketMemberIdField.value;
-            const memberName = addTicketMemberNameDisplay.textContent;
+            const memberName = addTicketMemberNameDisplay.textContent; // Get the member's current name
             const quantityToAdd = parseInt(addTicketQuantityField.value);
-            const newTicketType = newTicketTypeField.value.trim();
-            const newTicketPrice = newTicketPriceField.value.trim(); // Get as string first to check if empty
-            const referenceCode = addTicketReferenceCodeField.value.trim();
+            const newTicketType = newTicketTypeField.value;
+            const newTicketPrice = newTicketPriceField.value; // Keep as string for now, parse later
+            const referenceCode = addTicketReferenceCodeField.value;
 
-            if (!memberId || isNaN(quantityToAdd) || quantityToAdd <= 0 || !referenceCode) {
-                alert('Please fill in quantity and confirm reference code.');
+            if (isNaN(quantityToAdd) || quantityToAdd <= 0) {
+                alert('Quantity to Add must be a positive number.');
                 return;
             }
 
-            // Verify reference code against the persons table before updating tickets
+            // Reference code verification
             const { data: person, error: personError } = await supabase
                 .from('persons')
                 .select('reference_code')
@@ -1230,4 +1176,3 @@
     </script>
 </body>
 </html>
-
