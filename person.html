@@ -722,7 +722,7 @@
                             <td class="numeric-cell">${parseFloat(member.ticket_price).toFixed(2)}</td>
                             <td class="numeric-cell">${member.quantity}</td>
                             <td class="code-cell">${member.reference_code}</td>
-                            <td>$${member.last_payment_amount ? parseFloat(member.last_payment_amount).toFixed(2) : '0.00'} (${member.last_payment_date ? new Date(member.last_payment_date).toLocaleDateString() : 'N/A'})</td>
+                            <td>₱${member.last_payment_amount ? parseFloat(member.last_payment_amount).toFixed(2) : '0.00'} (${member.last_payment_date ? new Date(member.last_payment_date).toLocaleDateString() : 'N/A'})</td>
                             <td class="numeric-cell">${balance.toFixed(2)}</td>
                             <td class="timestamp-cell">${new Date(member.created_at).toLocaleString()}</td>
                             <td>
@@ -829,7 +829,7 @@
                 // Check if name, ticket_price, or quantity changed to record a transaction
                 if (oldMemberData.name !== memberData.name || oldMemberData.ticket_price !== memberData.ticket_price || oldMemberData.quantity !== memberData.quantity) {
                     const transactionAmountChange = (memberData.ticket_price * memberData.quantity) - (oldMemberData.ticket_price * oldMemberData.quantity);
-                    const transactionDescription = `Updated ticket details for ${memberData.name}. Old: ${oldMemberData.quantity} x $${oldMemberData.ticket_price}, New: ${memberData.quantity} x $${memberData.ticket_price}. Change in value: $${transactionAmountChange.toFixed(2)}.`;
+                    const transactionDescription = `Updated ticket details for ${memberData.name}. Old: ${oldMemberData.quantity} x ₱${oldMemberData.ticket_price}, New: ${memberData.quantity} x ₱${memberData.ticket_price}. Change in value: ₱${transactionAmountChange.toFixed(2)}.`;
                     
                     const { error: transactionError } = await supabase
                         .from('transactions_person') // Changed to transactions_person
@@ -857,7 +857,7 @@
         }
 
         async function handleDeleteGroupMember(id, name, ticketPrice, quantity) {
-            if (!confirm(`Are you sure you want to delete ${name}'s record (${quantity} x $${ticketPrice} tickets)? This will also delete associated transactions.`)) {
+            if (!confirm(`Are you sure you want to delete ${name}'s record (${quantity} x ₱${ticketPrice} tickets)? This will also delete associated transactions.`)) {
                 return;
             }
 
@@ -904,7 +904,7 @@
                         transaction_type: paymentData.transaction_type,
                         reference_code: paymentData.reference_code,
                         notes: paymentData.notes,
-                        description: `${paymentData.transaction_type} of $${paymentData.amount.toFixed(2)} for ${paymentData.member_name}`
+                        description: `${paymentData.transaction_type} of ₱${paymentData.amount.toFixed(2)} for ${paymentData.member_name}`
                     });
                 if (transactionError) {
                     throw transactionError;
@@ -922,7 +922,7 @@
                     throw updateError;
                 }
 
-                alert(`Payment of $${paymentData.amount.toFixed(2)} for ${paymentData.member_name} recorded successfully!`);
+                alert(`Payment of ₱${paymentData.amount.toFixed(2)} for ${paymentData.member_name} recorded successfully!`);
                 closePaymentModal();
                 fetchGroupMembers(); // Refresh table
             } catch (error) {
@@ -952,7 +952,7 @@
                 const finalTicketPrice = newTicketPrice !== null && newTicketPrice !== '' ? parseFloat(newTicketPrice) : member.ticket_price;
                 
                 const transactionAmount = quantityToAdd * finalTicketPrice; // Value of the tickets being added
-                const transactionDescription = `Added ${quantityToAdd} tickets (type: ${finalTicketType}, price: $${finalTicketPrice.toFixed(2)}) for ${member.name}. Total: $${transactionAmount.toFixed(2)}.`;
+                const transactionDescription = `Added ${quantityToAdd} tickets (type: ${finalTicketType}, price: ₱${finalTicketPrice.toFixed(2)}) for ${member.name}. Total: ₱${transactionAmount.toFixed(2)}.`;
 
                 // 1. Update the persons table
                 const { error: updateMemberError } = await supabase
@@ -1045,7 +1045,7 @@
         async function openAddTicketModal(memberId, memberName, ticketPrice, quantity, referenceCode) {
             addTicketMemberIdField.value = memberId;
             addTicketMemberNameDisplay.textContent = memberName;
-            currentTicketDisplay.textContent = `${quantity} x $${parseFloat(ticketPrice).toFixed(2)}`; // Display current ticket info
+            currentTicketDisplay.textContent = `${quantity} x ₱${parseFloat(ticketPrice).toFixed(2)}`; // Display current ticket info
             addTicketReferenceCodeField.value = referenceCode; // Pre-fill reference code
             addTicketForm.reset(); // Clear form fields
             addTicketModal.classList.remove('hidden');
