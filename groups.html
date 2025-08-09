@@ -358,7 +358,7 @@
                 <input type="hidden" id="addTicketCurrentTicketType">
                 <input type="hidden" id="addTicketCurrentTicketPrice">
                 <input type="hidden" id="addTicketExpectedReferenceCode"> <div class="bg-blue-50 p-3 rounded-md mb-4 text-sm text-blue-700">
-                    <p>Current Ticket: <span id="currentTicketTypeDisplay" class="font-bold"></span> @ $<span id="currentTicketPriceDisplay" class="font-bold"></span></p>
+                    <p>Current Ticket: <span id="currentTicketTypeDisplay" class="font-bold"></span> @ ₱<span id="currentTicketPriceDisplay" class="font-bold"></span></p>
                 </div>
 
                 <div>
@@ -891,11 +891,11 @@
                             <td class="uuid-cell">${member.id}</td>
                             <td>${member.name}</td>
                             <td>${member.ticket_type || 'N/A'}</td>
-                            <td class="numeric-cell">$${parseFloat(member.ticket_price).toFixed(2)}</td>
+                            <td class="numeric-cell">₱${parseFloat(member.ticket_price).toFixed(2)}</td>
                             <td class="numeric-cell">${member.quantity}</td>
-                            <td class="numeric-cell font-bold text-blue-700">$${totalDue.toFixed(2)}</td>
-                            <td class="numeric-cell font-bold text-green-700">$${totalPaid.toFixed(2)}</td>
-                            <td class="numeric-cell font-bold ${balanceDue > 0 ? 'text-red-700' : 'text-gray-700'}">$${balanceDue.toFixed(2)}</td>
+                            <td class="numeric-cell font-bold text-blue-700">₱${totalDue.toFixed(2)}</td>
+                            <td class="numeric-cell font-bold text-green-700">₱${totalPaid.toFixed(2)}</td>
+                            <td class="numeric-cell font-bold ${balanceDue > 0 ? 'text-red-700' : 'text-gray-700'}">₱${balanceDue.toFixed(2)}</td>
                             <td class="code-cell">${member.reference_code || 'N/A'}</td>
                             <td class="action-buttons">
                                 <div class="dropdown-container">
@@ -1161,14 +1161,14 @@
                 finalTicketPrice = newTicketPrice;
                 updatedQuantity = quantityToAdd; // This is now the *new total quantity* for the new type
                 transactionAmount = quantityToAdd * finalTicketPrice; // Amount based on the new tickets
-                transactionNotes = `Changed primary ticket type to ${finalTicketType} and added ${quantityToAdd} tickets @ $${finalTicketPrice.toFixed(2)} each.`;
+                transactionNotes = `Changed primary ticket type to ${finalTicketType} and added ${quantityToAdd} tickets @ ₱${finalTicketPrice.toFixed(2)} each.`;
             } else {
                 // Just adding more of the existing ticket type
                 finalTicketType = currentTicketType;
                 finalTicketPrice = currentTicketPrice; // Keep existing price
                 updatedQuantity = currentQuantity + quantityToAdd;
                 transactionAmount = quantityToAdd * currentTicketPrice; // Amount based on adding more existing tickets
-                transactionNotes = `Added ${quantityToAdd} more ${currentTicketType} tickets @ $${currentTicketPrice.toFixed(2)} each.`;
+                transactionNotes = `Added ${quantityToAdd} more ${currentTicketType} tickets @ ₱${currentTicketPrice.toFixed(2)} each.`;
             }
 
             // Handle potential price-only update (without changing type or adding quantity in the primary sense)
@@ -1177,9 +1177,9 @@
                 // If only price changed, but no new quantity added, transaction amount is 0, notes reflect price update
                 if (quantityToAdd === 0 || isNaN(quantityToAdd)) { // If quantity was not explicitly increased
                     transactionAmount = 0;
-                    transactionNotes = `Updated price for ${finalTicketType} tickets to $${finalTicketPrice.toFixed(2)}. Quantity remains ${updatedQuantity || currentQuantity}.`;
+                    transactionNotes = `Updated price for ${finalTicketType} tickets to ₱${finalTicketPrice.toFixed(2)}. Quantity remains ${updatedQuantity || currentQuantity}.`;
                 } else { // If price changed AND quantity added
-                     transactionNotes = `Added ${quantityToAdd} ${finalTicketType} tickets at new price $${finalTicketPrice.toFixed(2)}. Total tickets: ${updatedQuantity}.`;
+                     transactionNotes = `Added ${quantityToAdd} ${finalTicketType} tickets at new price ₱${finalTicketPrice.toFixed(2)}. Total tickets: ${updatedQuantity}.`;
                 }
             }
 
@@ -1266,7 +1266,7 @@
                         row.innerHTML = `
                             <td class="timestamp-cell">${new Date(transaction.created_at).toLocaleString()}</td>
                             <td>${transaction.transaction_type}</td>
-                            <td class="numeric-cell">$${parseFloat(transaction.amount).toFixed(2)}</td>
+                            <td class="numeric-cell">₱${parseFloat(transaction.amount).toFixed(2)}</td>
                             <td>${transaction.notes || 'N/A'}</td>
                             <td class="action-buttons">
                                 <button class="delete-transaction-button bg-red-500 hover:bg-red-600 text-white p-2 rounded-full text-xs" data-id="${transaction.id}" title="Delete Transaction">
