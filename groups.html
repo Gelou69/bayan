@@ -1250,11 +1250,11 @@
             transactionHistoryBody.innerHTML = '';
 
             try {
-                const { data, error } = await supabase
-                    .from('transactions')
-                    .select('*')
-                    .eq('member_id', memberId)
-                    .order('created_at', { ascending: false });
+               const { data, error } = await supabase
+                .from('transactions')
+                .select('*')
+                .eq('member_id', memberId)
+            .order('transaction_date', { ascending: false });
 
                 if (error) throw error;
 
