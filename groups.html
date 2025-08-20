@@ -8,9 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom styles for modals, hidden class, dropdowns, etc. */
-        .hidden {
-            display: none !important;
-        }
+        /* REMOVED .hidden { display: none !important; } to manage display via JS */
         .modal {
             position: fixed;
             top: 0;
@@ -18,10 +16,16 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
+            display: none; /* Start hidden, managed by JS */
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out; /* Smooth fade-in/out */
+        }
+        .modal.show {
+            opacity: 1;
+            display: flex; /* Show with flex when 'show' class is added */
         }
         .modal-content {
             background-color: white;
@@ -31,7 +35,34 @@
             max-width: 90%;
             max-height: 90%;
             overflow-y: auto;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out; /* Smooth slide-in/out */
+            position: relative; /* Needed for absolute positioning of close button */
         }
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        /* Style for the universal modal close button (X icon) */
+        .modal-close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #a0aec0; /* Light gray */
+            cursor: pointer;
+            transition: color 0.2s ease, transform 0.2s ease;
+            padding: 0.25rem;
+            line-height: 1; /* Prevent extra space around icon */
+        }
+
+        .modal-close-button:hover {
+            color: #e53e3e; /* Red on hover */
+            transform: scale(1.2);
+        }
+
         .dropdown-container {
             position: relative;
             display: inline-block;
@@ -46,6 +77,14 @@
             z-index: 50;
             min-width: 180px;
             display: none; /* Hidden by default */
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+        }
+        .dropdown-menu.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
         }
         .dropdown-menu button {
             display: flex;
@@ -58,6 +97,7 @@
             cursor: pointer;
             font-size: 0.875rem;
             color: #4a5568;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
         .dropdown-menu button i {
             margin-right: 0.5rem;
@@ -65,6 +105,7 @@
         }
         .dropdown-menu button:hover {
             background-color: #f7fafc;
+            color: #2d3748;
         }
         .uuid-cell {
             font-family: 'SF Mono', 'Segoe UI Mono', monospace;
@@ -94,11 +135,14 @@
             font-size: 1.1em;
             color: #4A5568;
             padding: 0.25rem;
+            transition: color 0.2s ease, transform 0.2s ease;
         }
         .kebab-button:hover {
             color: #2D3748;
+            transform: scale(1.1);
         }
          #logout-modal {
+            /* Keep display: none here as it's a special case for auto-logout */
             display: none; /* Hidden by default */
             position: fixed; /* Stay in place */
             z-index: 1000; /* Sit on top */
@@ -110,6 +154,12 @@
             background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
             justify-content: center;
             align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        #logout-modal.show {
+            opacity: 1;
+            display: flex;
         }
         .logout-modal-content {
             background-color: #fefefe;
@@ -122,6 +172,11 @@
             border-radius: 5px;
             text-align: center;
             position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out;
+        }
+        #logout-modal.show .logout-modal-content {
+            transform: translateY(0);
         }
         .logout-modal-content button {
             background-color: #007bff;
@@ -132,9 +187,11 @@
             cursor: pointer;
             font-size: 16px;
             margin-top: 15px;
+            transition: background-color 0.2s ease, transform 0.2s ease;
         }
         .logout-modal-content button:hover {
             background-color: #0056b3;
+            transform: translateY(-2px);
         }
         .countdown {
             font-size: 1.5em;
@@ -143,28 +200,27 @@
             margin-top: 10px;
         }
          .header {
-            background-color: var(--primary-color);
+            background-color: #4a6572; /* Using a specific color for consistency */
             padding: 1rem 2rem;
-            box-shadow: var(--box-shadow-medium);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Simple shadow */
             position: sticky;
             top: 0;
             z-index: 1000;
         }
 
        .navbar {
-    display: flex
-;
-    justify-content: flex-end;
-    align-items: center;
-    max-width: 1200px;
-    margin: 0 auto;
-    background-color: #4a6572;
-    color: white;
-}
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #4a6572;
+            color: white;
+        }
 
         .navbar a,
         .navbar button {
-            color: var(--light-text);
+            color: white; /* Light text for dark background */
             text-decoration: none;
             padding: 0.75rem 1.25rem;
             margin-left: 1rem;
@@ -209,6 +265,57 @@
             z-index: 1;
         }
 
+        /* Search bar specific styles */
+        .search-container {
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .search-input {
+            flex-grow: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .search-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+            outline: none;
+        }
+        .search-results {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: absolute;
+            width: calc(100% - 2rem); /* Adjust based on padding */
+            z-index: 100;
+            margin-top: 0.5rem;
+        }
+        .search-results-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid #edf2f7;
+            transition: background-color 0.2s ease;
+        }
+        .search-results-item:last-child {
+            border-bottom: none;
+        }
+        .search-results-item:hover {
+            background-color: #f7fafc;
+        }
+        .search-results-item strong {
+            color: #2d3748;
+        }
+        .search-results-item span {
+            font-size: 0.875rem;
+            color: #718096;
+        }
     </style>
 </head>
 <body class="bg-gray-100 p-8">
@@ -217,19 +324,25 @@
         <a href="profile.html">Home</a>
         <a href="groups.html">Groups</a>
         <a href="person.html">Persons</a>
-        <button id="logout-button">Logout</button>
+        <button id="logout-button-nav">Logout</button>
     </div>
+    </nav>
 
-    <div class="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow-md">
+    <div class="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow-md mt-8">
         <h1 class="text-2xl font-bold mb-6 text-gray-800">Group Management Dashboard</h1>
 
-        <div class="mb-6">
-            <button id="addGroupButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        <div class="mb-6 flex flex-wrap items-center gap-4">
+            <button id="addGroupButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200 ease-in-out transform hover:scale-105">
                 <i class="fas fa-plus-circle mr-2"></i>Add New Group
             </button>
-            <button id="logoutButton" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-4">
+            <button id="logoutButton" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-200 ease-in-out transform hover:scale-105">
                 <i class="fas fa-sign-out-alt mr-2"></i>Logout
             </button>
+        </div>
+
+        <div class="search-container relative">
+            <input type="text" id="memberSearchInput" class="search-input" placeholder="Search members by name or reference code...">
+            <div id="searchResults" class="search-results hidden absolute top-full left-0 right-0"></div>
         </div>
 
         <div class="overflow-x-auto">
@@ -251,8 +364,9 @@
         </div>
     </div>
 
-    <div id="groupFormModal" class="modal hidden">
+    <div id="groupFormModal" class="modal">
         <div class="modal-content">
+            <button class="modal-close-button" onclick="closeModal('groupFormModal')"><i class="fas fa-times"></i></button>
             <h2 id="groupFormModalTitle" class="text-xl font-semibold mb-4">Add New Group</h2>
             <form id="groupForm" class="space-y-4">
                 <input type="hidden" id="groupId">
@@ -265,18 +379,19 @@
                     <input type="text" id="groupReferenceCode" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 </div>
                 <div class="flex justify-end space-x-4">
-                    <button type="button" onclick="closeGroupFormModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Save Group</button>
+                    <button type="button" onclick="closeModal('groupFormModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Cancel</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Save Group</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="groupMembersModal" class="modal hidden">
+    <div id="groupMembersModal" class="modal">
         <div class="modal-content w-full max-w-4xl">
+            <button class="modal-close-button" onclick="closeModal('groupMembersModal')"><i class="fas fa-times"></i></button>
             <h2 id="modalTitle" class="text-xl font-semibold mb-4">Group Members</h2>
             <div class="mb-4">
-                <button id="addMemberButton" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                <button id="addMemberButton" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-200 ease-in-out transform hover:scale-105">
                     <i class="fas fa-user-plus mr-2"></i>Add New Member
                 </button>
             </div>
@@ -284,7 +399,7 @@
                 <table class="min-w-full bg-white border border-gray-300 rounded-lg">
                     <thead class="bg-gray-200">
                         <tr>
-                            <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
+                            <!-- Removed ID column -->
                             <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
                             <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ticket Type</th>
                             <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Price</th>
@@ -303,13 +418,14 @@
                 <p id="error-group-members" class="text-center py-4 text-red-500 hidden"></p>
             </div>
             <div class="flex justify-end mt-4">
-                <button type="button" onclick="closeGroupMembersModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Close</button>
+                <button type="button" onclick="closeModal('groupMembersModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Close</button>
             </div>
         </div>
     </div>
 
-    <div id="memberFormModal" class="modal hidden">
+    <div id="memberFormModal" class="modal">
         <div class="modal-content">
+            <button class="modal-close-button" onclick="closeModal('memberFormModal')"><i class="fas fa-times"></i></button>
             <h2 id="memberFormModalTitle" class="text-xl font-semibold mb-4">Add New Member</h2>
             <form id="memberForm" class="space-y-4">
                 <input type="hidden" id="memberId">
@@ -341,15 +457,16 @@
                     <input type="text" id="memberReferenceCode" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 </div>
                 <div class="flex justify-end space-x-4">
-                    <button type="button" onclick="closeMemberFormModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Save Member</button>
+                    <button type="button" onclick="closeModal('memberFormModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Cancel</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Save Member</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="addTicketModal" class="modal hidden">
+    <div id="addTicketModal" class="modal">
         <div class="modal-content">
+            <button class="modal-close-button" onclick="closeModal('addTicketModal')"><i class="fas fa-times"></i></button>
             <h2 id="addTicketModalTitle" class="text-xl font-semibold mb-4">Add Tickets</h2>
             <p class="text-gray-700 mb-4">For: <span id="addTicketMemberName" class="font-semibold"></span></p>
             <form id="addTicketForm" class="space-y-4">
@@ -389,15 +506,16 @@
                 </div>
 
                 <div class="flex justify-end space-x-4">
-                    <button type="button" onclick="closeAddTicketModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Update Tickets</button>
+                    <button type="button" onclick="closeModal('addTicketModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Cancel</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Update Tickets</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="transactionModal" class="modal hidden">
+    <div id="transactionModal" class="modal">
         <div class="modal-content w-full max-w-lg">
+            <button class="modal-close-button" onclick="closeModal('transactionModal')"><i class="fas fa-times"></i></button>
             <h2 id="transactionModalTitle" class="text-xl font-semibold mb-4">Add Payment / View Transactions</h2>
             <p class="text-gray-700 mb-4">For: <span id="currentMemberName" class="font-semibold"></span></p>
 
@@ -428,7 +546,7 @@
                     <textarea id="transactionNotes" rows="3" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
                 </div>
                 <div class="flex justify-end space-x-4">
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">Record Transaction</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Record Transaction</button>
                 </div>
             </form>
 
@@ -451,13 +569,14 @@
                 <p id="error-transactions" class="text-center py-4 text-red-500 hidden"></p>
             </div>
             <div class="flex justify-end mt-4">
-                <button type="button" onclick="closeTransactionModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Close</button>
+                <button type="button" onclick="closeModal('transactionModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Close</button>
             </div>
         </div>
     </div>
 
-    <div id="logout-modal" class="modal hidden">
+    <div id="logout-modal" class="modal">
         <div class="logout-modal-content">
+            <button class="modal-close-button" onclick="closeModal('logout-modal')"><i class="fas fa-times"></i></button>
             <h2>Session About to Expire!</h2>
             <p>You will be logged out in <span class="countdown" id="countdown"></span> seconds due to inactivity.</p>
             <p>Click "Stay Logged In" to continue your session.</p>
@@ -501,6 +620,7 @@
         const errorGroups = document.getElementById('error-groups');
         const addGroupButton = document.getElementById('addGroupButton');
         const logoutButton = document.getElementById('logoutButton'); // Added logout button
+        const logoutButtonNav = document.getElementById('logout-button-nav'); // Nav logout button
 
         const groupMembersModal = document.getElementById('groupMembersModal');
         const modalTitle = document.getElementById('modalTitle');
@@ -560,6 +680,12 @@
         const loadingTransactions = document.getElementById('loading-transactions');
         const errorTransactions = document.getElementById('error-transactions');
         const transactionTypeInput = document.getElementById('transactionType'); // New: for transaction type dropdown
+        // Removed currency and status inputs
+        // const transactionCurrencyInput = document.getElementById('transactionCurrency');
+        // const transactionStatusInput = document.getElementById('transactionStatus');
+
+        const memberSearchInput = document.getElementById('memberSearchInput');
+        const searchResultsDiv = document.getElementById('searchResults');
 
         let currentOpenDropdown = null;
 
@@ -580,6 +706,21 @@
 
         function hideError(element) {
             element.classList.add('hidden');
+        }
+
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'flex'; // Set display to flex immediately
+            setTimeout(() => modal.classList.add('show'), 10); // Add 'show' class after a tiny delay for transition
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove('show');
+            modal.addEventListener('transitionend', function handler() {
+                modal.style.display = 'none'; // Hide after transition
+                modal.removeEventListener('transitionend', handler);
+            });
         }
 
         // --- Auto-Logout Implementation ---
@@ -617,7 +758,7 @@
          */
         function resetInactivityTimer() {
             clearTimeout(inactivityTimeoutId);
-            hideLogoutWarningModal(); // Hide modal if it was open
+            closeModal('logout-modal'); // Use the new closeModal function
             startInactivityTimer(); // Restart the timer
         }
 
@@ -626,30 +767,12 @@
          */
         function startInactivityTimer() {
             inactivityTimeoutId = setTimeout(() => {
-                showLogoutWarningModal(); // Show warning before actual logout
+                openModal('logout-modal'); // Use the new openModal function
+                countdownSeconds = WARNING_TIME_MS / 1000; // Reset countdown
+                updateCountdownDisplay(); // Initial display
+                warningTimeoutId = setTimeout(performLogout, WARNING_TIME_MS);
+                countdownIntervalId = setInterval(updateCountdownDisplay, 1000);
             }, INACTIVITY_TIMEOUT_MS - WARNING_TIME_MS);
-        }
-
-        /**
-         * Displays the logout warning modal and starts its countdown.
-         */
-        function showLogoutWarningModal() {
-            console.log("Showing logout warning...");
-            logoutModal.style.display = 'flex'; // Use flex to center
-            countdownSeconds = WARNING_TIME_MS / 1000; // Reset countdown
-            updateCountdownDisplay(); // Initial display
-
-            warningTimeoutId = setTimeout(performLogout, WARNING_TIME_MS);
-            countdownIntervalId = setInterval(updateCountdownDisplay, 1000);
-        }
-
-        /**
-         * Hides the logout warning modal and clears its related timers.
-         */
-        function hideLogoutWarningModal() {
-            logoutModal.style.display = 'none';
-            clearTimeout(warningTimeoutId);
-            clearInterval(countdownIntervalId);
         }
 
         /**
@@ -690,6 +813,12 @@
             }
         });
 
+        logoutButtonNav.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to log out?")) {
+                await performLogout();
+            }
+        });
+
         // --- Group Management Functions ---
 
         async function fetchGroups() {
@@ -716,10 +845,10 @@
                             <td class="code-cell">${group.reference_code || 'N/A'}</td>
                             <td class="timestamp-cell">${new Date(group.created_at).toLocaleString()}</td>
                             <td class="action-buttons">
-                                <button class="edit-button bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full text-xs" data-id="${group.id}" title="Edit Group">
+                                <button class="edit-button bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full text-xs transition duration-200 ease-in-out transform hover:scale-110" data-id="${group.id}" title="Edit Group">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="delete-button bg-red-500 hover:bg-red-600 text-white p-2 rounded-full text-xs ml-1" data-id="${group.id}" data-name="${group.name}" title="Delete Group">
+                                <button class="delete-button bg-red-500 hover:bg-red-600 text-white p-2 rounded-full text-xs ml-1 transition duration-200 ease-in-out transform hover:scale-110" data-id="${group.id}" data-name="${group.name}" title="Delete Group">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </td>
@@ -727,6 +856,7 @@
                         // Add click event listeners to non-action cells to view members
                         row.querySelectorAll('td:not(.action-buttons)').forEach(cell => {
                             cell.addEventListener('click', () => showGroupMembersInGroup(group.id, group.name));
+                            cell.classList.add('cursor-pointer', 'hover:bg-gray-50', 'transition', 'duration-150');
                         });
 
                         row.querySelector('.edit-button').addEventListener('click', (e) => {
@@ -755,7 +885,7 @@
             groupFormModalTitle.textContent = 'Add New Group';
             groupForm.reset();
             groupIdInput.value = '';
-            groupFormModal.classList.remove('hidden');
+            openModal('groupFormModal');
         });
 
         function openGroupFormModalForEdit(group) {
@@ -763,11 +893,7 @@
             groupIdInput.value = group.id;
             groupNameInput.value = group.name;
             groupReferenceCodeInput.value = group.reference_code || '';
-            groupFormModal.classList.remove('hidden');
-        }
-
-        function closeGroupFormModal() {
-            groupFormModal.classList.add('hidden');
+            openModal('groupFormModal');
         }
 
         groupForm.addEventListener('submit', async (e) => {
@@ -796,7 +922,7 @@
                     if (error) throw error;
                     alert('Group added successfully!');
                 }
-                closeGroupFormModal();
+                closeModal('groupFormModal');
                 fetchGroups();
             } catch (error) {
                 console.error('Error saving group:', error.message);
@@ -810,11 +936,6 @@
             }
 
             try {
-                // Supabase typically handles CASCADE DELETE if configured in your database schema.
-                // If not, you'd manually delete members and then transactions for those members.
-                // For simplicity, assuming ON DELETE CASCADE is set up on group_members and transactions tables
-                // for group_id and member_id respectively.
-
                 const { error: groupError } = await supabase
                     .from('groups')
                     .delete()
@@ -842,19 +963,19 @@
             memberIdInput.value = '';
             memberGroupIdInput.value = currentGroupId;
             memberNameInput.focus(); // Focus on the first input
-            memberFormModal.classList.remove('hidden');
+            openModal('memberFormModal');
         });
 
-        async function showGroupMembersInGroup(groupId, groupName) {
+        async function showGroupMembersInGroup(groupId, groupName, memberIdToHighlight = null) {
             currentGroupId = groupId;
-            groupMembersModal.classList.remove('hidden');
+            openModal('groupMembersModal');
             modalTitle.textContent = `Group Members in Group: ${groupName}`;
             showLoading(loadingGroupMembers);
             hideError(errorGroupMembers);
             groupMembersModalBody.innerHTML = '';
 
             try {
-                const { data, error } = await supabase
+                const { data: members, error: membersError } = await supabase
                     .from('group_members')
                     .select(`
                         id,
@@ -863,32 +984,53 @@
                         ticket_price,
                         quantity,
                         reference_code,
-                        group_id,
-                        transactions(
-                            amount,
-                            transaction_type
-                        )
+                        group_id
                     `)
                     .eq('group_id', groupId)
                     .order('name', { ascending: true });
 
-                if (error) throw error;
+                if (membersError) throw membersError;
 
-                const COLSPAN_COUNT = 10;
+                const memberIds = members.map(m => m.id);
 
-                if (data.length === 0) {
+                let transactionsData = [];
+                if (memberIds.length > 0) {
+                    // Fetch all relevant transactions in one go
+                    const { data: transactions, error: transactionsError } = await supabase
+                        .from('transactions') // Corrected table name
+                        .select('member_id, amount, transaction_type')
+                        .in('member_id', memberIds);
+                    
+                    if (transactionsError) {
+                        console.warn('Warning fetching transactions for members:', transactionsError.message);
+                    } else {
+                        transactionsData = transactions;
+                    }
+                }
+
+                const COLSPAN_COUNT = 9; // Changed from 10 to 9 as ID column is removed
+
+                if (members.length === 0) {
                     groupMembersModalBody.innerHTML = `<tr><td colspan="${COLSPAN_COUNT}" class="text-center py-4 text-gray-500">No members found in this group. Click "Add New Member" to add one.</td></tr>`;
                 } else {
-                    data.forEach(member => {
+                    members.forEach(member => {
+                        const memberTransactions = transactionsData.filter(t => t.member_id === member.id);
                         const totalDue = (parseFloat(member.ticket_price) * parseInt(member.quantity));
-                        const totalPaid = member.transactions.reduce((sum, transaction) => {
+                        const totalPaid = memberTransactions.reduce((sum, transaction) => {
+                            // Only sum 'Payment' type transactions for 'Amount Paid'
                             return sum + (transaction.transaction_type === 'Payment' ? parseFloat(transaction.amount) : 0);
                         }, 0);
                         const balanceDue = totalDue - totalPaid;
 
                         const row = document.createElement('tr');
+                        row.classList.add('transition', 'duration-150', 'ease-in-out', 'hover:bg-gray-50');
+                        if (memberIdToHighlight && member.id === memberIdToHighlight) {
+                            row.classList.add('bg-blue-100', 'border-blue-500', 'border-l-4'); // Highlight row
+                            setTimeout(() => row.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); // Scroll to it
+                        }
+
                         row.innerHTML = `
-                            <td class="uuid-cell">${member.id}</td>
+                            <!-- Removed ID cell -->
                             <td>${member.name}</td>
                             <td>${member.ticket_type || 'N/A'}</td>
                             <td class="numeric-cell">₱${parseFloat(member.ticket_price).toFixed(2)}</td>
@@ -974,7 +1116,7 @@
         }
 
         function closeGroupMembersModal() {
-            groupMembersModal.classList.add('hidden');
+            closeModal('groupMembersModal');
             currentGroupId = null;
             closeAllDropdowns();
         }
@@ -988,11 +1130,7 @@
             memberTicketPriceInput.value = member.ticket_price;
             memberQuantityInput.value = member.quantity;
             memberReferenceCodeInput.value = member.reference_code || '';
-            memberFormModal.classList.remove('hidden');
-        }
-
-        function closeMemberFormModal() {
-            memberFormModal.classList.add('hidden');
+            openModal('memberFormModal');
         }
 
         memberForm.addEventListener('submit', async (e) => {
@@ -1036,7 +1174,7 @@
                     if (error) throw error;
                     alert('Member added successfully!');
                 }
-                closeMemberFormModal();
+                closeModal('memberFormModal');
 
                 if (group_id && modalTitle.textContent) {
                     const groupNameMatch = modalTitle.textContent.match(/Group Members in Group: (.+)/);
@@ -1104,11 +1242,7 @@
             addTicketTypeInput.value = '';
             addTicketPriceInput.value = ''; // Clear new ticket price input
             addTicketReferenceCodeInput.value = ''; // Clear confirmation ref code
-            addTicketModal.classList.remove('hidden');
-        }
-
-        function closeAddTicketModal() {
-            addTicketModal.classList.add('hidden');
+            openModal('addTicketModal');
         }
 
         addTicketForm.addEventListener('submit', async (e) => {
@@ -1200,13 +1334,14 @@
                 // Record the transaction for the ticket change
                 if (transactionAmount > 0 || transactionNotes) { // Only add transaction if there's an amount or specific notes
                     const { error: transactionError } = await supabase
-                        .from('transactions')
+                        .from('transactions') // Corrected table name
                         .insert({
                             member_id: memberId,
                             amount: transactionAmount,
                             transaction_type: transactionType,
                             reference_code: userRefCode, // Store the confirmed reference code
-                            notes: transactionNotes
+                            notes: transactionNotes,
+                            transaction_date: new Date().toISOString() // Use current date for transaction_date
                         });
 
                     if (transactionError) {
@@ -1215,7 +1350,7 @@
                 }
 
                 alert('Tickets updated successfully!');
-                closeAddTicketModal();
+                closeModal('addTicketModal');
                 // Refresh the group members modal to show updated values
                 if (currentGroupId && modalTitle.textContent) {
                     const groupNameMatch = modalTitle.textContent.match(/Group Members in Group: (.+)/);
@@ -1237,7 +1372,7 @@
 
         async function showTransactionsForMember(memberId, memberName, memberRefCode) {
             currentMemberId = memberId;
-            transactionModal.classList.remove('hidden');
+            openModal('transactionModal');
             transactionModalTitle.textContent = `Transactions for: ${memberName}`;
             currentMemberNameSpan.textContent = memberName;
             transactionMemberIdInput.value = memberId;
@@ -1251,10 +1386,10 @@
 
             try {
                const { data, error } = await supabase
-                .from('transactions')
+                .from('transactions') // Corrected table name
                 .select('*')
                 .eq('member_id', memberId)
-            .order('transaction_date', { ascending: false });
+                .order('transaction_date', { ascending: false }); // Order by transaction_date
 
                 if (error) throw error;
 
@@ -1263,19 +1398,20 @@
                 } else {
                     data.forEach(transaction => {
                         const row = document.createElement('tr');
+                        row.classList.add('transition', 'duration-150', 'ease-in-out', 'hover:bg-gray-50');
                         row.innerHTML = `
-                            <td class="timestamp-cell">${new Date(transaction.created_at).toLocaleString()}</td>
+                            <td class="timestamp-cell">${new Date(transaction.transaction_date).toLocaleString()}</td>
                             <td>${transaction.transaction_type}</td>
                             <td class="numeric-cell">₱${parseFloat(transaction.amount).toFixed(2)}</td>
                             <td>${transaction.notes || 'N/A'}</td>
                             <td class="action-buttons">
-                                <button class="delete-transaction-button bg-red-500 hover:bg-red-600 text-white p-2 rounded-full text-xs" data-id="${transaction.id}" title="Delete Transaction">
+                                <button class="delete-transaction-button bg-red-500 hover:bg-red-600 text-white p-2 rounded-full text-xs transition duration-200 ease-in-out transform hover:scale-110" data-id="${transaction.transaction_id}" title="Delete Transaction">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </td>
                         `;
                         row.querySelector('.delete-transaction-button').addEventListener('click', (e) => {
-                            deleteTransaction(transaction.id, memberId, memberName, memberRefCode);
+                            deleteTransaction(transaction.transaction_id, memberId, memberName, memberRefCode);
                         });
                         transactionHistoryBody.appendChild(row);
                     });
@@ -1290,7 +1426,7 @@
         }
 
         function closeTransactionModal() {
-            transactionModal.classList.add('hidden');
+            closeModal('transactionModal');
             currentMemberId = null;
         }
 
@@ -1302,6 +1438,9 @@
             const expectedRefCode = transactionExpectedReferenceCodeInput.value;
             const notes = transactionNotesInput.value || null;
             const transactionType = transactionTypeInput.value; // Get selected transaction type
+            // Removed currency and status
+            // const currency = transactionCurrencyInput.value;
+            // const status = transactionStatusInput.value;
 
             if (isNaN(amount) || amount <= 0) {
                 alert('Please enter a valid amount for the transaction.');
@@ -1318,13 +1457,17 @@
 
             try {
                 const { error } = await supabase
-                    .from('transactions')
+                    .from('transactions') // Corrected table name
                     .insert({
                         member_id: memberId,
                         amount: amount,
                         transaction_type: transactionType,
                         reference_code: userRefCode, // Store the confirmed reference code
-                        notes: notes
+                        notes: notes,
+                        // Removed currency and status
+                        // currency: currency,
+                        // status: status,
+                        transaction_date: new Date().toISOString() // Set transaction_date
                     });
 
                 if (error) throw error;
@@ -1332,6 +1475,9 @@
                 alert('Transaction recorded successfully!');
                 transactionForm.reset();
                 transactionReferenceCodeInput.value = ''; // Clear user input field
+                // Removed currency and status reset
+                // transactionCurrencyInput.value = 'PHP';
+                // transactionStatusInput.value = 'Completed';
 
                 // Re-fetch transactions and also refresh member list to update balance
                 const memberName = currentMemberNameSpan.textContent;
@@ -1350,15 +1496,15 @@
         });
 
         async function deleteTransaction(transactionId, memberId, memberName, memberRefCode) {
-            if (!confirm('Are you sure you want to delete this transaction?')) {
+            if (!confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
                 return;
             }
 
             try {
                 const { error } = await supabase
-                    .from('transactions')
+                    .from('transactions') // Corrected table name
                     .delete()
-                    .eq('id', transactionId);
+                    .eq('transaction_id', transactionId); // Use transaction_id as primary key
 
                 if (error) throw error;
 
@@ -1382,10 +1528,10 @@
         function toggleMemberActionsDropdown(button) {
             const dropdownMenu = button.nextElementSibling; // The dropdown is the next sibling
             if (currentOpenDropdown && currentOpenDropdown !== dropdownMenu) {
-                currentOpenDropdown.style.display = 'none'; // Close other open dropdown
+                currentOpenDropdown.classList.remove('show'); // Close other open dropdown
             }
-            dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
-            currentOpenDropdown = dropdownMenu.style.display === 'block' ? dropdownMenu : null;
+            dropdownMenu.classList.toggle('show');
+            currentOpenDropdown = dropdownMenu.classList.contains('show') ? dropdownMenu : null;
         }
 
         // Close dropdown if clicked outside
@@ -1397,10 +1543,94 @@
 
         function closeAllDropdowns() {
             if (currentOpenDropdown) {
-                currentOpenDropdown.style.display = 'none';
+                currentOpenDropdown.classList.remove('show');
                 currentOpenDropdown = null;
             }
         }
+
+        // --- Search Functionality ---
+        let allMembers = []; // Cache all members for search
+
+        async function fetchAllMembersForSearch() {
+            const { data, error } = await supabase
+                .from('group_members')
+                .select('id, name, reference_code, group_id, groups(name)'); // Also fetch group name
+
+            if (error) {
+                console.error('Error fetching all members for search:', error.message);
+                return [];
+            }
+            allMembers = data;
+            return data;
+        }
+
+        memberSearchInput.addEventListener('input', debounce(handleMemberSearch, 300));
+        memberSearchInput.addEventListener('focus', () => {
+            if (memberSearchInput.value.length > 0 && searchResultsDiv.children.length > 0) {
+                searchResultsDiv.classList.remove('hidden');
+            }
+        });
+        memberSearchInput.addEventListener('blur', (e) => {
+            // Delay hiding to allow click on results
+            setTimeout(() => {
+                if (!searchResultsDiv.contains(e.relatedTarget)) { // Check if focus moved outside search results
+                    searchResultsDiv.classList.add('hidden');
+                }
+            }, 100);
+        });
+
+
+        async function handleMemberSearch(event) {
+            const query = event.target.value.toLowerCase();
+            searchResultsDiv.innerHTML = '';
+
+            if (query.length < 2) { // Require at least 2 characters for search
+                searchResultsDiv.classList.add('hidden');
+                return;
+            }
+
+            if (allMembers.length === 0) {
+                await fetchAllMembersForSearch(); // Fetch if not already cached
+            }
+
+            const filteredMembers = allMembers.filter(member =>
+                member.name.toLowerCase().includes(query) ||
+                (member.reference_code && member.reference_code.toLowerCase().includes(query))
+            );
+
+            if (filteredMembers.length > 0) {
+                filteredMembers.forEach(member => {
+                    const item = document.createElement('div');
+                    item.classList.add('search-results-item');
+                    item.innerHTML = `
+                        <strong>${member.name}</strong>
+                        <span>(Group: ${member.groups.name || 'N/A'}, Ref: ${member.reference_code || 'N/A'})</span>
+                    `;
+                    item.addEventListener('click', () => selectSearchResult(member));
+                    searchResultsDiv.appendChild(item);
+                });
+                searchResultsDiv.classList.remove('hidden');
+            } else {
+                searchResultsDiv.classList.add('hidden');
+            }
+        }
+
+        function selectSearchResult(member) {
+            memberSearchInput.value = `${member.name} (${member.reference_code || 'N/A'})`;
+            searchResultsDiv.classList.add('hidden');
+            // Now, open the group members modal and highlight the member
+            showGroupMembersInGroup(member.group_id, member.groups.name, member.id);
+        }
+
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
 
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', async () => {
@@ -1409,9 +1639,28 @@
             if (isAuthenticated) {
                 // Only fetch data and start timers if the user is logged in.
                 fetchGroups();
+                fetchAllMembersForSearch(); // Pre-fetch members for search
                 startInactivityTimer();
                 console.log("Automatic logout timer started.");
             }
+
+            // Attach click outside listener to all modals
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    // If the click target is the modal itself (the backdrop), close it
+                    if (e.target === modal) {
+                        closeModal(modal.id);
+                    }
+                });
+            });
+
+            // Initially hide all modals that don't have 'display: none' in CSS
+            // This ensures they are hidden on page load before any JS runs
+            document.querySelectorAll('.modal').forEach(modal => {
+                if (!modal.classList.contains('show')) { // Only hide if not explicitly shown by some other initial logic
+                    modal.style.display = 'none';
+                }
+            });
         });
 
     </script>
