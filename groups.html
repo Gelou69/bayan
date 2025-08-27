@@ -1053,8 +1053,16 @@ tbody tr:last-child td {
                         const memberTransactions = transactionsData.filter(t => t.member_id === member.id);
                         const totalDue = (parseFloat(member.ticket_price) * parseInt(member.quantity));
                         const totalPaid = memberTransactions.reduce((sum, transaction) => {
-                            // Only sum 'Payment' type transactions for 'Amount Paid'
-                            return sum + (transaction.transaction_type === 'Payment' ? parseFloat(transaction.amount) : 0);
+                            // Sum 'Payment' transactions, subtract 'Refund' transactions, 'Adjustment' can be positive or negative
+                            let transactionAmount = parseFloat(transaction.amount);
+                            if (transaction.transaction_type === 'Payment') {
+                                return sum + transactionAmount;
+                            } else if (transaction.transaction_type === 'Refund') {
+                                return sum - transactionAmount; // Refunds decrease the amount paid
+                            } else if (transaction.transaction_type === 'Adjustment') {
+                                return sum + transactionAmount; // Adjustments can increase or decrease, depending on the amount entered
+                            }
+                            return sum;
                         }, 0);
                         const balanceDue = totalDue - totalPaid;
 
@@ -1433,10 +1441,20 @@ tbody tr:last-child td {
                 } else {
                     data.forEach(transaction => {
                         const row = document.createElement('tr');
+                        // Determine text color based on transaction type
+                        let amountClass = '';
+                        if (transaction.transaction_type === 'Payment') {
+                            amountClass = 'text-accent-color'; // Green for payments
+                        } else if (transaction.transaction_type === 'Refund') {
+                            amountClass = 'text-danger-color'; // Red for refunds
+                        } else if (transaction.transaction_type === 'Adjustment') {
+                            amountClass = parseFloat(transaction.amount) >= 0 ? 'text-primary-dark' : 'text-danger-color'; // Dark teal for positive adjustments, red for negative
+                        }
+
                         row.innerHTML = `
                             <td class="timestamp-cell">${new Date(transaction.transaction_date).toLocaleString()}</td>
                             <td>${transaction.transaction_type}</td>
-                            <td class="numeric-cell">₱${parseFloat(transaction.amount).toFixed(2)}</td>
+                            <td class="numeric-cell ${amountClass}">₱${parseFloat(transaction.amount).toFixed(2)}</td>
                             <td>${transaction.notes || 'N/A'}</td>
                             <td class="action-buttons">
                                 <button class="delete-transaction-button" data-id="${transaction.transaction_id}" title="Delete Transaction">
@@ -1509,9 +1527,8 @@ tbody tr:last-child td {
                 alert('Transaction recorded successfully!');
                 transactionForm.reset();
                 transactionReferenceCodeInput.value = ''; // Clear user input field
-                // Removed currency and status reset
-                // transactionCurrencyInput.value = 'PHP';
-                // transactionStatusInput.value = 'Completed';
+                // Reset transaction type to Payment after successful submission
+                transactionTypeInput.value = 'Payment';
 
                 // Re-fetch transactions and also refresh member list to update balance
                 const memberName = currentMemberNameSpan.textContent;
@@ -1700,5 +1717,3 @@ tbody tr:last-child td {
     </script>
 </body>
 </html>
-
-
