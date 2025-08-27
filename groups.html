@@ -7,418 +7,432 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom styles for modals, hidden class, dropdowns, etc. */
-        /* REMOVED .hidden { display: none !important; } to manage display via JS */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none; /* Start hidden, managed by JS */
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out; /* Smooth fade-in/out */
-        }
-        .modal.show {
-            opacity: 1;
-            display: flex; /* Show with flex when 'show' class is added */
-        }
-        .modal-content {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 90%;
-            max-height: 90%;
-            overflow-y: auto;
-            transform: translateY(-20px);
-            transition: transform 0.3s ease-in-out; /* Smooth slide-in/out */
-            position: relative; /* Needed for absolute positioning of close button */
-        }
-        .modal.show .modal-content {
-            transform: translateY(0);
-        }
+       /* --- Color Palette Variables --- */
+:root {
+    --primary-color: #4A6572; /* Dark Teal */
+    --primary-light: #6B8E99;
+    --primary-dark: #344955;
 
-        /* Style for the universal modal close button (X icon) */
-        .modal-close-button {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: #a0aec0; /* Light gray */
-            cursor: pointer;
-            transition: color 0.2s ease, transform 0.2s ease;
-            padding: 0.25rem;
-            line-height: 1; /* Prevent extra space around icon */
-        }
+    --secondary-color: #F9AA33; /* Orange */
+    --secondary-light: #FFC166;
+    --secondary-dark: #D48A1F;
 
-        .modal-close-button:hover {
-            color: #e53e3e; /* Red on hover */
-            transform: scale(1.2);
-        }
+    --accent-color: #28B463; /* Green for success/add */
+    --accent-light: #58D68D;
+    --accent-dark: #1F8D4F;
 
-        .dropdown-container {
-            position: relative;
-            display: inline-block;
-        }
-        .dropdown-menu {
-            position: absolute;
-            right: 0;
-            background-color: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.25rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            z-index: 50;
-            min-width: 180px;
-            display: none; /* Hidden by default */
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.2s ease-out, transform 0.2s ease-out;
-        }
-        .dropdown-menu.show {
-            display: block;
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .dropdown-menu button {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            padding: 0.5rem 1rem;
-            text-align: left;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 0.875rem;
-            color: #4a5568;
-            transition: background-color 0.2s ease, color 0.2s ease;
-        }
-        .dropdown-menu button i {
-            margin-right: 0.5rem;
-            width: 1rem; /* Ensure consistent icon spacing */
-        }
-        .dropdown-menu button:hover {
-            background-color: #f7fafc;
-            color: #2d3748;
-        }
-        .uuid-cell {
-            font-family: 'SF Mono', 'Segoe UI Mono', monospace;
-            font-size: 0.75rem;
-            color: #6B7280;
-            word-break: break-all;
-        }
-        .code-cell {
-             font-family: 'SF Mono', 'Segoe UI Mono', monospace;
-            font-size: 0.875rem;
-        }
-        .timestamp-cell {
-            font-size: 0.875rem;
-            color: #6B7280;
-        }
-        .numeric-cell {
-            text-align: right;
-            font-family: 'SF Mono', 'Segoe UI Mono', monospace;
-        }
-        .action-buttons {
-            text-align: center;
-        }
-        .kebab-button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.1em;
-            color: #4A5568;
-            padding: 0.25rem;
-            transition: color 0.2s ease, transform 0.2s ease;
-        }
-        .kebab-button:hover {
-            color: #2D3748;
-            transform: scale(1.1);
-        }
-         #logout-modal {
-            /* Keep display: none here as it's a special case for auto-logout */
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 1000; /* Sit on top */
-            left: 0;
-            top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-        }
-        #logout-modal.show {
-            opacity: 1;
-            display: flex;
-        }
-        .logout-modal-content {
-            background-color: #fefefe;
-            margin: auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 400px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            border-radius: 5px;
-            text-align: center;
-            position: relative;
-            transform: translateY(-20px);
-            transition: transform 0.3s ease-in-out;
-        }
-        #logout-modal.show .logout-modal-content {
-            transform: translateY(0);
-        }
-        .logout-modal-content button {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 15px;
-            transition: background-color 0.2s ease, transform 0.2s ease;
-        }
-        .logout-modal-content button:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
-        }
-        .countdown {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #dc3545;
-            margin-top: 10px;
-        }
-         .header {
-            background-color: #4a6572; /* Using a specific color for consistency */
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Simple shadow */
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
+    --danger-color: #E74C3C; /* Red for danger/delete */
+    --danger-light: #EC7063;
+    --danger-dark: #C0392B;
 
-       .navbar {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: #4a6572;
-            color: white;
-        }
+    --neutral-light: #F8F9FA; /* Light Gray Background */
+    --neutral-medium: #E9ECEF; /* Medium Gray */
+    --neutral-dark: #CED4DA; /* Darker Gray for borders */
+    --text-color: #343A40; /* Dark text */
+    --text-light: #6C757D; /* Lighter text */
+}
 
-        .navbar a,
-        .navbar button {
-            color: white; /* Light text for dark background */
-            text-decoration: none;
-            padding: 0.75rem 1.25rem;
-            margin-left: 1rem;
-            font-weight: 600;
-            font-size: 1rem;
-            border-radius: 6px;
-            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
-            position: relative;
-            overflow: hidden; /* For pseudo-element animation */
-            background: none; /* Reset button default background */
-            border: none; /* Reset button default border */
-            cursor: pointer;
-        }
+/* --- Global Styles --- */
+body {
+    font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--neutral-light);
+    color: var(--text-color);
+}
 
-        .navbar a:hover,
-        .navbar button:hover {
-            background-color: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px); /* Subtle lift */
-        }
-        
-        .navbar a::before,
-        .navbar button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.1); /* Subtle highlight */
-            transition: left 0.3s ease;
-            z-index: 0;
-        }
+/* --- Modal Styles --- */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Darker backdrop */
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+}
+.modal.show {
+    opacity: 1;
+    display: flex;
+}
+.modal-content {
+    background-color: white;
+    padding: 2.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
+    transform: translateY(-30px);
+    transition: transform 0.4s ease-in-out;
+    position: relative;
+}
+.modal.show .modal-content {
+    transform: translateY(0);
+}
 
-        .navbar a:hover::before,
-        .navbar button:hover::before {
-            left: 0;
-        }
+.modal-close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+    padding: 0.25rem;
+}
+.modal-close-button:hover {
+    color: var(--danger-color);
+    transform: scale(1.3) rotate(90deg);
+}
 
-        .navbar a span,
-        .navbar button span {
-            position: relative;
-            z-index: 1;
-        }
+/* --- Dropdown Styles --- */
+.dropdown-container {
+    position: relative;
+    display: inline-block;
+}
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    background-color: white;
+    border: 1px solid var(--neutral-dark);
+    border-radius: 0.5rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    min-width: 200px;
+    display: none;
+    opacity: 0;
+    transform: translateY(15px);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+.dropdown-menu.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+.dropdown-menu button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.75rem 1.25rem;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+}
+.dropdown-menu button i {
+    margin-right: 0.75rem;
+    width: 1.25rem;
+    text-align: center;
+}
+.dropdown-menu button:hover {
+    background-color: var(--neutral-medium);
+    color: var(--primary-dark);
+    transform: translateX(5px);
+}
 
-        /* Search bar specific styles */
-        .search-container {
-            margin-bottom: 1.5rem;
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-        .search-input {
-            flex-grow: 1;
-            padding: 0.75rem 1rem;
-            border: 1px solid #cbd5e0;
-            border-radius: 0.375rem;
-            font-size: 1rem;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-        .search-input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
-            outline: none;
-        }
-        .search-results {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.375rem;
-            background-color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            position: absolute;
-            width: calc(100% - 2rem); /* Adjust based on padding */
-            z-index: 100;
-            margin-top: 0.5rem;
-        }
-        .search-results-item {
-            padding: 0.75rem 1rem;
-            cursor: pointer;
-            border-bottom: 1px solid #edf2f7;
-            transition: background-color 0.2s ease;
-        }
-        .search-results-item:last-child {
-            border-bottom: none;
-        }
-        .search-results-item:hover {
-            background-color: #f7fafc;
-        }
-        .search-results-item strong {
-            color: #2d3748;
-        }
-        .search-results-item span {
-            font-size: 0.875rem;
-            color: #718096;
-        }
+/* --- Table Styles --- */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+thead {
+    background-color: var(--primary-light);
+    color: white;
+}
+th {
+    padding: 1rem 1.25rem;
+    text-align: left;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--primary-dark);
+}
+tbody tr {
+    background-color: white;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+tbody tr:nth-child(even) {
+    background-color: var(--neutral-light);
+}
+tbody tr:hover {
+    background-color: var(--neutral-medium);
+    transform: scale(1.005);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+td {
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--neutral-medium);
+    font-size: 0.95rem;
+}
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* --- Action Buttons --- */
+.kebab-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2em;
+    color: var(--primary-color);
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+.kebab-button:hover {
+    color: var(--primary-dark);
+    background-color: var(--neutral-medium);
+    transform: scale(1.2) rotate(90deg);
+}
+
+/* --- Button Styles --- */
+.btn {
+    font-weight: 700;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.btn i {
+    margin-right: 0.5rem;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+.btn-secondary:hover {
+    background-color: var(--secondary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-accent {
+    background-color: var(--accent-color);
+    color: white;
+}
+.btn-accent:hover {
+    background-color: var(--accent-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+.btn-danger:hover {
+    background-color: var(--danger-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-neutral {
+    background-color: var(--neutral-medium);
+    color: var(--text-color);
+}
+.btn-neutral:hover {
+    background-color: var(--neutral-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* --- Header & Navbar --- */
+.header {
+    background-color: var(--primary-color);
+    padding: 1rem 2rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+.navbar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: var(--primary-color);
+    color: white;
+}
+.navbar a,
+.navbar button {
+    color: white;
+    font-size: 1rem;
+    margin-left: 1.5rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+.navbar a:hover,
+.navbar button:hover {
+    color: var(--secondary-color);
+    transform: translateY(-2px);
+}
+
+/* --- Search Bar --- */
+.search-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+}
+.search-input {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border: 1px solid var(--neutral-dark);
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+.search-input:focus {
+    box-shadow: 0 0 0 4px var(--accent-light);
+    border-color: var(--accent-color);
+}
+.search-input::placeholder {
+    color: var(--text-light);
+}
+.search-icon {
+    font-size: 1.2rem;
+    margin-right: 1rem;
+    color: var(--primary-dark);
+    transition: color 0.2s ease;
+}
+.search-icon:hover {
+    color: var(--accent-color);
+}
+
     </style>
 </head>
-<body class="bg-gray-100 p-8">
+<body class="p-8">
      <nav class="header">
-    <div class="navbar">
-        <a href="profile.html">Home</a>
-        <a href="groups.html">Groups</a>
-        <a href="person.html">Persons</a>
-        <button id="logout-button-nav">Logout</button>
-    </div>
+        <div class="navbar">
+            <a href="profile.html"><span>Home</span></a>
+            <a href="groups.html"><span>Groups</span></a>
+            <a href="person.html"><span>Persons</span></a>
+            <button id="logout-button-nav"><span>Logout</span></button>
+        </div>
     </nav>
 
-    <div class="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow-md mt-8">
-        <h1 class="text-2xl font-bold mb-6 text-gray-800">Group Management Dashboard</h1>
+    <div class="max-w-7xl mx-auto bg-white p-8 rounded-lg shadow-lg mt-8">
+        <h1 class="text-3xl font-extrabold mb-6 text-gray-800">Group Management Dashboard</h1>
 
-        <div class="mb-6 flex flex-wrap items-center gap-4">
-            <button id="addGroupButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200 ease-in-out transform hover:scale-105">
+        <div class="mb-8 flex flex-wrap items-center gap-4">
+            <button id="addGroupButton" class="btn btn-primary">
                 <i class="fas fa-plus-circle mr-2"></i>Add New Group
             </button>
-            <button id="logoutButton" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-200 ease-in-out transform hover:scale-105">
+            <button id="logoutButton" class="btn btn-danger">
                 <i class="fas fa-sign-out-alt mr-2"></i>Logout
             </button>
         </div>
 
-        <div class="search-container relative">
+        <div class="search-container">
             <input type="text" id="memberSearchInput" class="search-input" placeholder="Search members by name or reference code...">
-            <div id="searchResults" class="search-results hidden absolute top-full left-0 right-0"></div>
+            <div id="searchResults" class="search-results hidden"></div>
         </div>
 
         <div class="overflow-x-auto">
-            <table class="min-w-full bg-white border border-gray-300 rounded-lg">
-                <thead class="bg-gray-200">
+            <table class="min-w-full">
+                <thead>
                     <tr>
-                        <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
-                        <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Group Name</th>
-                        <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Reference Code</th>
-                        <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created At</th>
-                        <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                        <th class="py-3 px-4">ID</th>
+                        <th class="py-3 px-4">Group Name</th>
+                        <th class="py-3 px-4">Reference Code</th>
+                        <th class="py-3 px-4">Created At</th>
+                        <th class="py-3 px-4">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="groups-table-body">
                     </tbody>
             </table>
-            <p id="loading-groups" class="text-center py-4 text-gray-600 hidden">Loading groups...</p>
-            <p id="error-groups" class="text-center py-4 text-red-500 hidden"></p>
+            <p id="loading-groups" class="text-center py-4 hidden">Loading groups...</p>
+            <p id="error-groups" class="text-center py-4 hidden"></p>
         </div>
     </div>
 
     <div id="groupFormModal" class="modal">
         <div class="modal-content">
             <button class="modal-close-button" onclick="closeModal('groupFormModal')"><i class="fas fa-times"></i></button>
-            <h2 id="groupFormModalTitle" class="text-xl font-semibold mb-4">Add New Group</h2>
-            <form id="groupForm" class="space-y-4">
+            <h2 id="groupFormModalTitle" class="text-2xl font-bold mb-6 text-gray-800">Add New Group</h2>
+            <form id="groupForm" class="space-y-5">
                 <input type="hidden" id="groupId">
                 <div>
-                    <label for="groupName" class="block text-gray-700 text-sm font-bold mb-2">Group Name:</label>
-                    <input type="text" id="groupName" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <label for="groupName" class="block text-sm font-bold mb-2">Group Name:</label>
+                    <input type="text" id="groupName" class="shadow-sm" required>
                 </div>
                 <div>
-                    <label for="groupReferenceCode" class="block text-gray-700 text-sm font-bold mb-2">Reference Code (Optional):</label>
-                    <input type="text" id="groupReferenceCode" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <label for="groupReferenceCode" class="block text-sm font-bold mb-2">Reference Code (Optional):</label>
+                    <input type="text" id="groupReferenceCode" class="shadow-sm">
                 </div>
-                <div class="flex justify-end space-x-4">
-                    <button type="button" onclick="closeModal('groupFormModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Cancel</button>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Save Group</button>
+                <div class="flex justify-end space-x-4 pt-4">
+                    <button type="button" onclick="closeModal('groupFormModal')" class="btn btn-neutral">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Group</button>
                 </div>
             </form>
         </div>
     </div>
 
     <div id="groupMembersModal" class="modal">
-        <div class="modal-content w-full max-w-4xl">
+        <div class="modal-content w-full max-w-5xl">
             <button class="modal-close-button" onclick="closeModal('groupMembersModal')"><i class="fas fa-times"></i></button>
-            <h2 id="modalTitle" class="text-xl font-semibold mb-4">Group Members</h2>
-            <div class="mb-4">
-                <button id="addMemberButton" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-200 ease-in-out transform hover:scale-105">
+            <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-gray-800">Group Members</h2>
+            <div class="mb-6">
+                <button id="addMemberButton" class="btn btn-accent">
                     <i class="fas fa-user-plus mr-2"></i>Add New Member
                 </button>
             </div>
             <div class="overflow-x-auto">
-                <table class="min-w-full bg-white border border-gray-300 rounded-lg">
-                    <thead class="bg-gray-200">
+                <table class="min-w-full">
+                    <thead>
                         <tr>
-                            <!-- Removed ID column -->
-                            <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
-                            <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ticket Type</th>
-                            <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Price</th>
-                            <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Qty</th>
-                            <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total Due</th>
-                            <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount Paid</th>
-                            <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Balance Due</th>
-                            <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Reference Code</th>
-                            <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                            <th class="py-3 px-4">Name</th>
+                            <th class="py-3 px-4">Ticket Type</th>
+                            <th class="py-3 px-4 text-right">Price</th>
+                            <th class="py-3 px-4 text-right">Qty</th>
+                            <th class="py-3 px-4 text-right">Total Due</th>
+                            <th class="py-3 px-4 text-right">Amount Paid</th>
+                            <th class="py-3 px-4 text-right">Balance Due</th>
+                            <th class="py-3 px-4">Reference Code</th>
+                            <th class="py-3 px-4 text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="group-members-modal-body">
                         </tbody>
                 </table>
-                <p id="loading-group-members" class="text-center py-4 text-gray-600 hidden">Loading members...</p>
-                <p id="error-group-members" class="text-center py-4 text-red-500 hidden"></p>
+                <p id="loading-group-members" class="text-center py-4 hidden">Loading members...</p>
+                <p id="error-group-members" class="text-center py-4 hidden"></p>
             </div>
-            <div class="flex justify-end mt-4">
-                <button type="button" onclick="closeModal('groupMembersModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Close</button>
+            <div class="flex justify-end mt-6">
+                <button type="button" onclick="closeModal('groupMembersModal')" class="btn btn-neutral">Close</button>
             </div>
         </div>
     </div>
@@ -426,16 +440,17 @@
     <div id="memberFormModal" class="modal">
         <div class="modal-content">
             <button class="modal-close-button" onclick="closeModal('memberFormModal')"><i class="fas fa-times"></i></button>
-            <h2 id="memberFormModalTitle" class="text-xl font-semibold mb-4">Add New Member</h2>
-            <form id="memberForm" class="space-y-4">
+            <h2 id="memberFormModalTitle" class="text-2xl font-bold mb-6 text-gray-800">Add New Member</h2>
+            <form id="memberForm" class="space-y-5">
                 <input type="hidden" id="memberId">
-                <input type="hidden" id="memberGroupId"> <div>
-                    <label for="memberName" class="block text-gray-700 text-sm font-bold mb-2">Member Name:</label>
-                    <input type="text" id="memberName" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                <input type="hidden" id="memberGroupId">
+                <div>
+                    <label for="memberName" class="block text-sm font-bold mb-2">Member Name:</label>
+                    <input type="text" id="memberName" class="shadow-sm" required>
                 </div>
                 <div>
-                    <label for="memberTicketType" class="block text-gray-700 text-sm font-bold mb-2">Ticket Type:</label>
-                    <select id="memberTicketType" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <label for="memberTicketType" class="block text-sm font-bold mb-2">Ticket Type:</label>
+                    <select id="memberTicketType" class="shadow-sm" required>
                         <option value="">Select a Ticket Type</option>
                         <option value="Regular">Regular</option>
                         <option value="VIP">VIP</option>
@@ -445,20 +460,20 @@
                     </select>
                 </div>
                 <div>
-                    <label for="memberTicketPrice" class="block text-gray-700 text-sm font-bold mb-2">Ticket Price:</label>
-                    <input type="number" id="memberTicketPrice" step="0.01" min="0" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <label for="memberTicketPrice" class="block text-sm font-bold mb-2">Ticket Price:</label>
+                    <input type="number" id="memberTicketPrice" step="0.01" min="0" class="shadow-sm" required>
                 </div>
                 <div>
-                    <label for="memberQuantity" class="block text-gray-700 text-sm font-bold mb-2">Quantity:</label>
-                    <input type="number" id="memberQuantity" min="1" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <label for="memberQuantity" class="block text-sm font-bold mb-2">Quantity:</label>
+                    <input type="number" id="memberQuantity" min="1" class="shadow-sm" required>
                 </div>
                 <div>
-                    <label for="memberReferenceCode" class="block text-gray-700 text-sm font-bold mb-2">Reference Code (Optional):</label>
-                    <input type="text" id="memberReferenceCode" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <label for="memberReferenceCode" class="block text-sm font-bold mb-2">Reference Code (Optional):</label>
+                    <input type="text" id="memberReferenceCode" class="shadow-sm">
                 </div>
-                <div class="flex justify-end space-x-4">
-                    <button type="button" onclick="closeModal('memberFormModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Cancel</button>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Save Member</button>
+                <div class="flex justify-end space-x-4 pt-4">
+                    <button type="button" onclick="closeModal('memberFormModal')" class="btn btn-neutral">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Member</button>
                 </div>
             </form>
         </div>
@@ -467,27 +482,28 @@
     <div id="addTicketModal" class="modal">
         <div class="modal-content">
             <button class="modal-close-button" onclick="closeModal('addTicketModal')"><i class="fas fa-times"></i></button>
-            <h2 id="addTicketModalTitle" class="text-xl font-semibold mb-4">Add Tickets</h2>
-            <p class="text-gray-700 mb-4">For: <span id="addTicketMemberName" class="font-semibold"></span></p>
-            <form id="addTicketForm" class="space-y-4">
+            <h2 id="addTicketModalTitle" class="text-2xl font-bold mb-6 text-gray-800">Add Tickets</h2>
+            <p class="text-gray-700 mb-4">For: <span id="addTicketMemberName" class="font-semibold text-primary-dark"></span></p>
+            <form id="addTicketForm" class="space-y-5">
                 <input type="hidden" id="addTicketMemberId">
                 <input type="hidden" id="addTicketCurrentQuantity">
                 <input type="hidden" id="addTicketCurrentTicketType">
                 <input type="hidden" id="addTicketCurrentTicketPrice">
-                <input type="hidden" id="addTicketExpectedReferenceCode"> <div class="bg-blue-50 p-3 rounded-md mb-4 text-sm text-blue-700">
+                <input type="hidden" id="addTicketExpectedReferenceCode">
+                <div class="bg-primary-light bg-opacity-10 p-4 rounded-md mb-4 text-sm text-primary-dark border border-primary-light">
                     <p>Current Ticket: <span id="currentTicketTypeDisplay" class="font-bold"></span> @ ₱<span id="currentTicketPriceDisplay" class="font-bold"></span></p>
                 </div>
 
                 <div>
-                    <label for="addTicketQuantity" class="block text-gray-700 text-sm font-bold mb-2">Quantity to Add:</label>
-                    <input type="number" id="addTicketQuantity" min="1" value="1" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <label for="addTicketQuantity" class="block text-sm font-bold mb-2">Quantity to Add:</label>
+                    <input type="number" id="addTicketQuantity" min="1" value="1" class="shadow-sm" required>
                 </div>
-                <div class="text-sm text-gray-600 italic">
+                <div class="text-sm text-text-light italic mt-2 mb-4">
                     Leave "New Ticket Type" and "New Ticket Price" blank to just add more of the current ticket type.
                 </div>
                 <div>
-                    <label for="addTicketType" class="block text-gray-700 text-sm font-bold mb-2">New Ticket Type (Optional, to change primary type):</label>
-                    <select id="addTicketType" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <label for="addTicketType" class="block text-sm font-bold mb-2">New Ticket Type (Optional, to change primary type):</label>
+                    <select id="addTicketType" class="shadow-sm">
                         <option value="">-- No Change --</option>
                         <option value="Regular">Regular</option>
                         <option value="VIP">VIP</option>
@@ -497,79 +513,79 @@
                     </select>
                 </div>
                 <div>
-                    <label for="addTicketPrice" class="block text-gray-700 text-sm font-bold mb-2">New Ticket Price (Optional, if new type or price change):</label>
-                    <input type="number" id="addTicketPrice" step="0.01" min="0" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <label for="addTicketPrice" class="block text-sm font-bold mb-2">New Ticket Price (Optional, if new type or price change):</label>
+                    <input type="number" id="addTicketPrice" step="0.01" min="0" class="shadow-sm">
                 </div>
                 <div>
-                    <label for="addTicketReferenceCode" class="block text-gray-700 text-sm font-bold mb-2">Confirm Reference Code:</label>
-                    <input type="text" id="addTicketReferenceCode" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter member's reference code to confirm" required>
+                    <label for="addTicketReferenceCode" class="block text-sm font-bold mb-2">Confirm Reference Code:</label>
+                    <input type="text" id="addTicketReferenceCode" class="shadow-sm" placeholder="Enter member's reference code to confirm" required>
                 </div>
 
-                <div class="flex justify-end space-x-4">
-                    <button type="button" onclick="closeModal('addTicketModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Cancel</button>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Update Tickets</button>
+                <div class="flex justify-end space-x-4 pt-4">
+                    <button type="button" onclick="closeModal('addTicketModal')" class="btn btn-neutral">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Tickets</button>
                 </div>
             </form>
         </div>
     </div>
 
     <div id="transactionModal" class="modal">
-        <div class="modal-content w-full max-w-lg">
+        <div class="modal-content w-full max-w-xl">
             <button class="modal-close-button" onclick="closeModal('transactionModal')"><i class="fas fa-times"></i></button>
-            <h2 id="transactionModalTitle" class="text-xl font-semibold mb-4">Add Payment / View Transactions</h2>
-            <p class="text-gray-700 mb-4">For: <span id="currentMemberName" class="font-semibold"></span></p>
+            <h2 id="transactionModalTitle" class="text-2xl font-bold mb-6 text-gray-800">Add Payment / View Transactions</h2>
+            <p class="text-gray-700 mb-4">For: <span id="currentMemberName" class="font-semibold text-primary-dark"></span></p>
 
-            <form id="transactionForm" class="space-y-4 mb-6 p-4 border rounded-md bg-gray-50">
-                <h3 class="text-lg font-medium mb-2">Record New Transaction</h3>
+            <form id="transactionForm" class="space-y-5 mb-8 p-6 border border-neutral-dark rounded-lg bg-neutral-light shadow-sm">
+                <h3 class="text-xl font-semibold mb-4 text-primary-dark">Record New Transaction</h3>
                 <input type="hidden" id="transactionMemberId">
                 <input type="hidden" id="transactionId">
                 <input type="hidden" id="transactionExpectedReferenceCode">
 
                 <div>
-                    <label for="transactionAmount" class="block text-gray-700 text-sm font-bold mb-2">Amount:</label>
-                    <input type="number" id="transactionAmount" step="0.01" min="0" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <label for="transactionAmount" class="block text-sm font-bold mb-2">Amount:</label>
+                    <input type="number" id="transactionAmount" step="0.01" min="0" class="shadow-sm" required>
                 </div>
                 <div>
-                    <label for="transactionReferenceCode" class="block text-gray-700 text-sm font-bold mb-2">Confirm Reference Code:</label>
-                    <input type="text" id="transactionReferenceCode" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter member's reference code to confirm" required>
+                    <label for="transactionReferenceCode" class="block text-sm font-bold mb-2">Confirm Reference Code:</label>
+                    <input type="text" id="transactionReferenceCode" class="shadow-sm" placeholder="Enter member's reference code to confirm" required>
                 </div>
                  <div>
-                    <label for="transactionType" class="block text-gray-700 text-sm font-bold mb-2">Transaction Type:</label>
-                    <select id="transactionType" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <label for="transactionType" class="block text-sm font-bold mb-2">Transaction Type:</label>
+                    <select id="transactionType" class="shadow-sm" required>
                         <option value="Payment">Payment</option>
                         <option value="Refund">Refund</option>
                         <option value="Adjustment">Adjustment</option>
                     </select>
                 </div>
                 <div>
-                    <label for="transactionNotes" class="block text-gray-700 text-sm font-bold mb-2">Notes (Optional):</label>
-                    <textarea id="transactionNotes" rows="3" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                    <label for="transactionNotes" class="block text-sm font-bold mb-2">Notes (Optional):</label>
+                    <textarea id="transactionNotes" rows="3" class="shadow-sm"></textarea>
                 </div>
-                <div class="flex justify-end space-x-4">
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Record Transaction</button>
+                <div class="flex justify-end pt-4">
+                    <button type="submit" class="btn btn-primary">Record Transaction</button>
                 </div>
             </form>
 
-            <h3 class="text-lg font-medium mb-2">Transaction History</h3>
+            <h3 class="text-xl font-semibold mb-4 text-primary-dark">Transaction History</h3>
             <div class="overflow-x-auto">
-                <table class="min-w-full bg-white border border-gray-300 rounded-lg">
-                    <thead class="bg-gray-200">
+                <table class="min-w-full">
+                    <thead>
                         <tr>
-                            <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
-                            <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                            <th class="py-3 px-4 border-b text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
-                            <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Notes</th>
-                            <th class="py-3 px-4 border-b text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                            <th class="py-3 px-4">Date</th>
+                            <th class="py-3 px-4">Type</th>
+                            <th class="py-3 px-4 text-right">Amount</th>
+                            <th class="py-3 px-4">Notes</th>
+                            <th class="py-3 px-4 text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="transaction-history-body">
                         </tbody>
                 </table>
-                <p id="loading-transactions" class="text-center py-4 text-gray-600 hidden">Loading transactions...</p>
-                <p id="error-transactions" class="text-center py-4 text-red-500 hidden"></p>
+                <p id="loading-transactions" class="text-center py-4 hidden">Loading transactions...</p>
+                <p id="error-transactions" class="text-center py-4 hidden"></p>
             </div>
-            <div class="flex justify-end mt-4">
-                <button type="button" onclick="closeModal('transactionModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-200 ease-in-out">Close</button>
+            <div class="flex justify-end mt-6">
+                <button type="button" onclick="closeModal('transactionModal')" class="btn btn-neutral">Close</button>
             </div>
         </div>
     </div>
@@ -835,7 +851,7 @@
                 if (error) throw error;
 
                 if (data.length === 0) {
-                    groupsTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No groups found. Click "Add New Group" to create one.</td></tr>`;
+                    groupsTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-text-light">No groups found. Click "Add New Group" to create one.</td></tr>`;
                 } else {
                     data.forEach(group => {
                         const row = document.createElement('tr');
@@ -845,10 +861,10 @@
                             <td class="code-cell">${group.reference_code || 'N/A'}</td>
                             <td class="timestamp-cell">${new Date(group.created_at).toLocaleString()}</td>
                             <td class="action-buttons">
-                                <button class="edit-button bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full text-xs transition duration-200 ease-in-out transform hover:scale-110" data-id="${group.id}" title="Edit Group">
+                                <button class="edit-button" data-id="${group.id}" title="Edit Group">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="delete-button bg-red-500 hover:bg-red-600 text-white p-2 rounded-full text-xs ml-1 transition duration-200 ease-in-out transform hover:scale-110" data-id="${group.id}" data-name="${group.name}" title="Delete Group">
+                                <button class="delete-button ml-1" data-id="${group.id}" data-name="${group.name}" title="Delete Group">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </td>
@@ -856,7 +872,7 @@
                         // Add click event listeners to non-action cells to view members
                         row.querySelectorAll('td:not(.action-buttons)').forEach(cell => {
                             cell.addEventListener('click', () => showGroupMembersInGroup(group.id, group.name));
-                            cell.classList.add('cursor-pointer', 'hover:bg-gray-50', 'transition', 'duration-150');
+                            cell.classList.add('cursor-pointer'); // Hover effect handled by CSS
                         });
 
                         row.querySelector('.edit-button').addEventListener('click', (e) => {
@@ -874,7 +890,7 @@
             } catch (error) {
                 console.error('Error fetching groups:', error.message);
                 showError(errorGroups, `Failed to load groups: ${error.message}. Please check your Supabase configuration and RLS policies.`);
-                groupsTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">Error loading groups.</td></tr>`;
+                groupsTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger-color">Error loading groups.</td></tr>`;
             } finally {
                 hideLoading(loadingGroups);
             }
@@ -1000,7 +1016,7 @@
                         .from('transactions') // Corrected table name
                         .select('member_id, amount, transaction_type')
                         .in('member_id', memberIds);
-                    
+
                     if (transactionsError) {
                         console.warn('Warning fetching transactions for members:', transactionsError.message);
                     } else {
@@ -1011,7 +1027,7 @@
                 const COLSPAN_COUNT = 9; // Changed from 10 to 9 as ID column is removed
 
                 if (members.length === 0) {
-                    groupMembersModalBody.innerHTML = `<tr><td colspan="${COLSPAN_COUNT}" class="text-center py-4 text-gray-500">No members found in this group. Click "Add New Member" to add one.</td></tr>`;
+                    groupMembersModalBody.innerHTML = `<tr><td colspan="${COLSPAN_COUNT}" class="text-center py-4 text-text-light">No members found in this group. Click "Add New Member" to add one.</td></tr>`;
                 } else {
                     members.forEach(member => {
                         const memberTransactions = transactionsData.filter(t => t.member_id === member.id);
@@ -1023,7 +1039,6 @@
                         const balanceDue = totalDue - totalPaid;
 
                         const row = document.createElement('tr');
-                        row.classList.add('transition', 'duration-150', 'ease-in-out', 'hover:bg-gray-50');
                         if (memberIdToHighlight && member.id === memberIdToHighlight) {
                             row.classList.add('bg-blue-100', 'border-blue-500', 'border-l-4'); // Highlight row
                             setTimeout(() => row.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); // Scroll to it
@@ -1035,9 +1050,9 @@
                             <td>${member.ticket_type || 'N/A'}</td>
                             <td class="numeric-cell">₱${parseFloat(member.ticket_price).toFixed(2)}</td>
                             <td class="numeric-cell">${member.quantity}</td>
-                            <td class="numeric-cell font-bold text-blue-700">₱${totalDue.toFixed(2)}</td>
-                            <td class="numeric-cell font-bold text-green-700">₱${totalPaid.toFixed(2)}</td>
-                            <td class="numeric-cell font-bold ${balanceDue > 0 ? 'text-red-700' : 'text-gray-700'}">₱${balanceDue.toFixed(2)}</td>
+                            <td class="numeric-cell font-bold text-primary-dark">₱${totalDue.toFixed(2)}</td>
+                            <td class="numeric-cell font-bold text-accent-color">₱${totalPaid.toFixed(2)}</td>
+                            <td class="numeric-cell font-bold ${balanceDue > 0 ? 'text-danger-color' : 'text-text-color'}">₱${balanceDue.toFixed(2)}</td>
                             <td class="code-cell">${member.reference_code || 'N/A'}</td>
                             <td class="action-buttons">
                                 <div class="dropdown-container">
@@ -1109,7 +1124,7 @@
             } catch (error) {
                 console.error('Error fetching group members:', error.message);
                 showError(errorGroupMembers, `Failed to load group members: ${error.message}.`);
-                groupMembersModalBody.innerHTML = `<tr><td colspan="${COLSPAN_COUNT}" class="text-center py-4 text-red-500">Error loading group members.</td></tr>`;
+                groupMembersModalBody.innerHTML = `<tr><td colspan="${COLSPAN_COUNT}" class="text-center py-4 text-danger-color">Error loading group members.</td></tr>`;
             } finally {
                 hideLoading(loadingGroupMembers);
             }
@@ -1394,18 +1409,17 @@
                 if (error) throw error;
 
                 if (data.length === 0) {
-                    transactionHistoryBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No transactions for this member.</td></tr>`;
+                    transactionHistoryBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-text-light">No transactions for this member.</td></tr>`;
                 } else {
                     data.forEach(transaction => {
                         const row = document.createElement('tr');
-                        row.classList.add('transition', 'duration-150', 'ease-in-out', 'hover:bg-gray-50');
                         row.innerHTML = `
                             <td class="timestamp-cell">${new Date(transaction.transaction_date).toLocaleString()}</td>
                             <td>${transaction.transaction_type}</td>
                             <td class="numeric-cell">₱${parseFloat(transaction.amount).toFixed(2)}</td>
                             <td>${transaction.notes || 'N/A'}</td>
                             <td class="action-buttons">
-                                <button class="delete-transaction-button bg-red-500 hover:bg-red-600 text-white p-2 rounded-full text-xs transition duration-200 ease-in-out transform hover:scale-110" data-id="${transaction.transaction_id}" title="Delete Transaction">
+                                <button class="delete-transaction-button" data-id="${transaction.transaction_id}" title="Delete Transaction">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </td>
@@ -1419,7 +1433,7 @@
             } catch (error) {
                 console.error('Error fetching transactions:', error.message);
                 showError(errorTransactions, `Failed to load transactions: ${error.message}.`);
-                transactionHistoryBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">Error loading transactions.</td></tr>`;
+                transactionHistoryBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger-color">Error loading transactions.</td></tr>`;
             } finally {
                 hideLoading(loadingTransactions);
             }
@@ -1665,5 +1679,4 @@
 
     </script>
 </body>
-
 </html>
